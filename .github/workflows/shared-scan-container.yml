@@ -5,6 +5,10 @@ on:
       runtime:
         type: string
         required: true
+      trivy_timeout:
+        type: string
+        required: false
+        default: '10m0s'
 
 permissions: {}
 
@@ -54,6 +58,7 @@ jobs:
         with:
           image-ref: ${{ github.repository }}:${{ github.sha }}
           severity: HIGH,CRITICAL
+          timeout: ${{ input.trivy_timeout }}
           exit-code: 1
 
       - name: Comment on Scan Success
