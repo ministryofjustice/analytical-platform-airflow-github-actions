@@ -1,0 +1,6 @@
+---
+schemaVersion: 2.0.0
+
+metadataTest:
+  user: 1000
+  workdir: /opt/analyticalplatform
