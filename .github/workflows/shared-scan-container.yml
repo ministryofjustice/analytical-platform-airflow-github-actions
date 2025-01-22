@@ -5,7 +5,6 @@ on:
       runtime:
         type: string
         required: true
-        default: "python"
 
 permissions: {}
 
@@ -25,12 +24,12 @@ jobs:
         run: |
           imageVersion=$(grep "^FROM" Dockerfile | cut -d':' -f2)
 
-          curl -sSL https://raw.githubusercontent.com/ministryofjustice/analytical-platform-airflow-${{ inputs.runtime }}-base/refs/tags/${imageVersion}/.trivyignore --output analytical-platform-airflow-${{ inputs.runtime }}-base-trivyignore
+          curl --silent --show-error --location "https://raw.githubusercontent.com/ministryofjustice/analytical-platform-airflow-${{ inputs.runtime }}-base/refs/tags/${imageVersion}/.trivyignore" --output "analytical-platform-airflow-${{ inputs.runtime }}-base-trivyignore"
 
           if [[ ! -f .trivyignore ]]; then
-            mv analytical-platform-airflow-${{ inputs.runtime }}-base-trivyignore .trivyignore
+            mv "analytical-platform-airflow-${{ inputs.runtime }}-base-trivyignore" .trivyignore
           else
-            cat analytical-platform-airflow-${{ inputs.runtime }}-base-trivyignore >> .trivyignore
+            cat "analytical-platform-airflow-${{ inputs.runtime }}-base-trivyignore" >> .trivyignore
           fi
 
       - name: Build

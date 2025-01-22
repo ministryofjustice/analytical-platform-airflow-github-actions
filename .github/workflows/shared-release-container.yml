@@ -40,12 +40,12 @@ jobs:
       - name: Fetch ECR Access Policy
         id: fetch_ecr_access_policy
         run: |
-          curl -sSL https://raw.githubusercontent.com/ministryofjustice/analytical-platform-airflow-poc-github-actions/refs/heads/main/assets/ecr-access-policy/ecr-access-policy.json --output ecr-access-policy.json
+          curl --silent --show-error --location https://raw.githubusercontent.com/ministryofjustice/analytical-platform-airflow-poc-github-actions/refs/heads/main/assets/ecr-access-policy/ecr-access-policy.json --output ecr-access-policy.json
 
       - name: Create ECR Repository
         id: create_ecr_repository
         run: |
-          if [[ "$(aws ecr describe-repositories --repository-names ${ECR_REPOSITORY} 2>&1)" == *"RepositoryNotFoundException"* ]]; then
+          if [[ "$(aws ecr describe-repositories --repository-names "${ECR_REPOSITORY_NAME}" 2>&1)" == *"RepositoryNotFoundException"* ]]; then
             echo "Repository not found, creating it"
             aws ecr create-repository \
               --repository-name "${ECR_REPOSITORY_NAME}" \
