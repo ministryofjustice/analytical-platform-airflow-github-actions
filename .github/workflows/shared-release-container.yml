@@ -90,4 +90,4 @@ jobs:
           cosign verify \
             --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
             --certificate-identity-regexp="https://github\.com/ministryofjustice/analytical-platform-airflow-poc-github-actions/\.github/workflows/shared-release-container\.yml.+" \
-           "${REGISTRY}/${REPOSITORY}@${IMAGE_DIGEST}"
+            "${REGISTRY}/${REPOSITORY}@${IMAGE_DIGEST}"
