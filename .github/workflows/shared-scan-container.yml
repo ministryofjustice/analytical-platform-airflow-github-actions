@@ -18,18 +18,23 @@ jobs:
       - name: Checkout
         id: checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
 
       - name: Generate .trivyignore
         id: generate_trivyignore
+        shell: bash
+        env:
+          RUNTIME: ${{ inputs.runtime }}
         run: |
           imageVersion=$(grep "^FROM" Dockerfile | cut -d':' -f2)
 
-          curl --silent --show-error --location "https://raw.githubusercontent.com/ministryofjustice/analytical-platform-airflow-${{ inputs.runtime }}-base/refs/tags/${imageVersion}/.trivyignore" --output "analytical-platform-airflow-${{ inputs.runtime }}-base-trivyignore"
+          curl --silent --show-error --location "https://raw.githubusercontent.com/ministryofjustice/analytical-platform-airflow-${RUNTIME}-base/refs/tags/${imageVersion}/.trivyignore" --output "analytical-platform-airflow-${RUNTIME}-base-trivyignore"
 
           if [[ ! -f .trivyignore ]]; then
-            mv "analytical-platform-airflow-${{ inputs.runtime }}-base-trivyignore" .trivyignore
+            mv "analytical-platform-airflow-${RUNTIME}-base-trivyignore" .trivyignore
           else
-            cat "analytical-platform-airflow-${{ inputs.runtime }}-base-trivyignore" >> .trivyignore
+            cat "analytical-platform-airflow-${RUNTIME}-base-trivyignore" >> .trivyignore
           fi
 
       - name: Build
