@@ -8,7 +8,7 @@ on:
       trivy_timeout:
         type: string
         required: false
-        default: '10m0s'
+        default: "10m0s"
 
 permissions: {}
 
