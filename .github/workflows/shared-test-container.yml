@@ -24,7 +24,7 @@ jobs:
       - name: Fetch Container Structure Test
         id: fetch_container_structure_test
         run: |
-          curl --silent --show-error --location https://raw.githubusercontent.com/ministryofjustice/analytical-platform-airflow-poc-github-actions/refs/heads/main/assets/container-structure-test/container-structure-test.yml --output container-structure-test.yml
+          curl --silent --show-error --location https://raw.githubusercontent.com/ministryofjustice/analytical-platform-airflow-github-actions/refs/heads/main/assets/container-structure-test/container-structure-test.yml --output container-structure-test.yml
 
       - name: Build
         id: build
