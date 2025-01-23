@@ -58,8 +58,6 @@ jobs:
         env:
           REPOSITORY: ${{ env.ECR_REPOSITORY_NAME }}
         run: |
-          set -x
-
           if [[ "$(aws ecr describe-repositories --repository-names "${REPOSITORY}" 2>&1)" == *"RepositoryNotFoundException"* ]]; then
             echo "Repository not found, creating it"
             aws ecr create-repository \
