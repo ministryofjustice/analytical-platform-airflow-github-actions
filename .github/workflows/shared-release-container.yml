@@ -25,6 +25,7 @@ jobs:
 
       - name: Prepare Environment
         id: prepare_environment
+        shell: bash
         run: |
           ecrRepositoryName=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]' | sed 's/_/-/g')
           export ecrRepositoryName
@@ -47,16 +48,20 @@ jobs:
 
       - name: Fetch ECR Access Policy
         id: fetch_ecr_access_policy
+        shell: bash
         run: |
           curl --silent --show-error --location https://raw.githubusercontent.com/ministryofjustice/analytical-platform-airflow-github-actions/refs/heads/main/assets/ecr-access-policy/ecr-access-policy.json --output ecr-access-policy.json
 
       - name: Create ECR Repository
         id: create_ecr_repository
+        shell: bash
+        env:
+          REPOSITORY: ${{ env.ECR_REPOSITORY_NAME }}
         run: |
-          if [[ "$(aws ecr describe-repositories --repository-names "${ECR_REPOSITORY_NAME}" 2>&1)" == *"RepositoryNotFoundException"* ]]; then
+          if [[ "$(aws ecr describe-repositories --repository-names "${REPOSITORY}" 2>&1)" == *"RepositoryNotFoundException"* ]]; then
             echo "Repository not found, creating it"
             aws ecr create-repository \
-              --repository-name "${ECR_REPOSITORY_NAME}" \
+              --repository-name "${REPOSITORY}" \
               --image-tag-mutability "IMMUTABLE" \
               --image-scanning-configuration "scanOnPush=true" \
               --encryption-configuration "encryptionType=KMS,kmsKey=alias/ecr/default"
@@ -65,7 +70,7 @@ jobs:
           fi
 
           aws ecr set-repository-policy \
-            --repository-name "${ECR_REPOSITORY_NAME}" \
+            --repository-name "${REPOSITORY}" \
             --policy-text file://ecr-access-policy.json
 
       - name: Build and Push

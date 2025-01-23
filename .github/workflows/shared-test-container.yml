@@ -36,6 +36,7 @@ jobs:
 
       - name: Test
         id: test
+        shell: bash
         run: |
           container-structure-test test --config container-structure-test.yml --image ${{ github.repository }}:${{ github.sha }}
 
