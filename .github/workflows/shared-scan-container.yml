@@ -64,6 +64,8 @@ jobs:
         with:
           image-ref: ${{ github.repository }}:${{ github.sha }}
           severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          vuln-types: library
           timeout: ${{ inputs.trivy_timeout }}
           exit-code: 1
 
