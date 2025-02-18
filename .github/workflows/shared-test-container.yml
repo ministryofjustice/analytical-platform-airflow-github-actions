@@ -63,5 +63,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: 'Container test has failed, please refer to the [User Guide](https://user-guide.analytical-platform.service.justice.gov.uk/) for more information.'
+              body: 'Container test has failed, please refer to the [User Guide](https://user-guidance.analytical-platform.service.justice.gov.uk/services/airflow/index.html#configuration-testing) for more information.'
             })

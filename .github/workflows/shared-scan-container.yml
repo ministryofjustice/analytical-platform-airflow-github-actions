@@ -92,5 +92,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: 'Container scan has failed, please refer to the [User Guide](https://user-guide.analytical-platform.service.justice.gov.uk/) for more information.'
+              body: 'Container scan has failed, please refer to the [User Guidance](https://user-guidance.analytical-platform.service.justice.gov.uk/services/airflow/index.html#vulnerability-scanning) for more information.'
             })
