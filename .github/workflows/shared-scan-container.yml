@@ -53,7 +53,7 @@ jobs:
         with:
           context: .
           push: false
-          tags: ${{ github.repository }}:${{ github.sha }}
+          tags: ${{ github.sha }}
 
       - name: Scan
         id: scan
@@ -62,7 +62,7 @@ jobs:
           TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db:2
           TRIVY_JAVA_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-java-db:1
         with:
-          image-ref: ${{ github.repository }}:${{ github.sha }}
+          image-ref: ${{ github.sha }}
           severity: HIGH,CRITICAL
           ignore-unfixed: true
           vuln-type: library
