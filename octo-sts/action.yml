@@ -6,9 +6,10 @@ branding:
   icon: git-merge
 
 inputs:
-  token:
-    description: 'GitHub token to use for authentication'
-    required: true
+  octo-sts-domain:
+    description: The domain of the Octo STS instance to use to federate
+    required: false
+    default: octo-sts.dev
 
 outputs: {}
 
@@ -19,31 +20,25 @@ runs:
       id: check_octo_sts_config_exists
       shell: bash
       run: |
-        # Check if .github/analytical-platform/octo-sts.json exists
         if [[ ! -f ".github/analytical-platform/octo-sts.json" ]]; then
           echo ".github/analytical-platform/octo-sts.json not found, skipping Octo STS"
           exit 0
         fi
 
-    - name: Clone octo-sts/action
-      id: clone_octo_sts_action
-      shell: bash
-      env:
-        GH_TOKEN: ${{ inputs.token }}
-      run: |
-        # Clone octo-sts/action
-        gh repo clone octo-sts/action /tmp/octo-sts -- --branch v1.0.0 --depth 1
-
-        # Debug
-        ls -lrta /tmp/octo-sts
-
     - name: Run octo-sts
       id: run_octo_sts
       shell: bash
+      env:
+        INPUT_DOMAIN: ${{ inputs.octo-sts-domain }}
       run: |
         # Loop over .github/analytical-platform/octo-sts.json
         jq -c '.[]' .github/analytical-platform/octo-sts.json | while read -r item; do
           scope=$(echo "${item}" | jq -r '.scope')
           identity=$(echo "${item}" | jq -r '.identity')
-          echo "Scope: ${scope}, Identity: ${identity}"
+
+          echo "Processing [ scope: ${scope},  identity: ${identity} ]"
+
+          INPUT_SCOPE="${scope}" INPUT_IDENTITY="${identity}" node "${GITHUB_ACTION_PATH}/index.js"
+
+          GH_TOKEN="${{ env.octo-token }}" gh repo clone "${scope}" "${GITHUB_WORKSPACE}/${scope}" -- --branch "${branch}" --depth 1
         done
