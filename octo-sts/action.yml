@@ -44,4 +44,3 @@ runs:
           identity=$(echo "${item}" | jq -r '.identity')
           echo "Scope: ${scope}, Identity: ${identity}"
         done
-
