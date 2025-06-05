@@ -16,4 +16,8 @@ runs:
       id: octo_sts
       shell: bash
       run: |
-        bash main.sh
+        ls -lrta
+
+        git clone --depth 1 --branch v1.0.0 https://github.com/octo-sts/action.git /tmp/octo-sts
+
+        ls -lrta /tmp/octo-sts
