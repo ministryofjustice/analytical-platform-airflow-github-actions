@@ -12,7 +12,8 @@ outputs: {}
 runs:
   using: composite
   steps:
-    - name: DEBUG
+    - name: Octo STS
+      id: octo_sts
       shell: bash
       run: |
-        ls -lrta
+        bash main.sh
