@@ -16,8 +16,13 @@ runs:
       id: octo_sts
       shell: bash
       run: |
-        ls -lrta
+        if [[ ! -f ".github/analytical-platform/octo-sts.yml" ]]; then
+          echo ".github/analytical-platform/octo-sts.yml not found, skipping Octo STS"
+          exit 0
+        fi
 
+        # Clone octo-sts/action
         gh repo clone octo-sts/action /tmp/octo-sts -- --branch v1.0.0 --depth 1
 
+        # Debug
         ls -lrta /tmp/octo-sts
