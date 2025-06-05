@@ -5,7 +5,11 @@ branding:
   color: purple
   icon: git-merge
 
-inputs: {}
+inputs:
+  token:
+    description: 'GitHub token to use for authentication'
+    required: true
+    default: ${{ secrets.GITHUB_TOKEN }}
 
 outputs: {}
 
@@ -26,7 +30,7 @@ runs:
       id: clone_octo_sts_action
       shell: bash
       env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ inputs.token }}
       run: |
         # Clone octo-sts/action
         gh repo clone octo-sts/action /tmp/octo-sts -- --branch v1.0.0 --depth 1
