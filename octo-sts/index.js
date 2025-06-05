@@ -27,8 +27,10 @@ if (!scope || !identity) {
         const tok = json2.token;
         // Mask the token in the GitHub Actions logs
         console.log(`::add-mask::${tok}`);
-        // Print the token to stdout so it can be captured in bash
-        console.log(tok);
+        // Write the token to /tmp/octo-sts-token
+        const fs = require('fs');
+        const path = '/tmp/octo-sts-token';
+        fs.writeFileSync(path, tok);
     } catch (err) {
         console.log(`::error::${err.stack}`); process.exit(1);
     }
