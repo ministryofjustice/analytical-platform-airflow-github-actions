@@ -35,6 +35,7 @@ runs:
         jq -c '.[]' .github/analytical-platform/octo-sts.json | while read -r item; do
           scope=$(echo "${item}" | jq -r '.scope')
           identity=$(echo "${item}" | jq -r '.identity')
+          branch=$(echo "${item}" | jq -r '.branch')
 
           echo "Processing [ scope: ${scope},  identity: ${identity} ]"
 
