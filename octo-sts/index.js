@@ -17,20 +17,16 @@ if (!scope || !identity) {
 (async function main() {
     // You can use await inside this function block
     try {
-        console.log(`::notice::Requesting token for scope '${scope}' and identity '${identity}'`);
         const res = await fetch(`${actionsUrl}&audience=octo-sts.dev`, { headers: { 'Authorization': `Bearer ${actionsToken}` } });
         const json = await res.json();
-        console.log(`::notice::Received ID token for audience 'octo-sts.dev'`);
 
-        console.log(`::notice::Exchanging ID token for scope '${scope}' and identity '${identity}'`);
         const res2 = await fetch(`https://octo-sts.dev/sts/exchange?scope=${scope}&identity=${identity}`, { headers: { 'Authorization': `Bearer ${json.value}` } });
         const json2 = await res2.json();
-        console.log(`::notice::Received token for scope '${scope}' and identity '${identity}'`);
 
         if (!json2.token) { console.log(`::error::${json2.message}`); process.exit(1); }
         const tok = json2.token;
         // Mask the token in the GitHub Actions logs
-        // console.log(`::add-mask::${tok}`);
+        console.log(`::add-mask::${tok}`);
         // Print the token to stdout so it can be captured in bash
         console.log(tok);
     } catch (err) {
