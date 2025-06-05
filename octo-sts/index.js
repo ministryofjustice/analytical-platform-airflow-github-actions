@@ -30,7 +30,7 @@ if (!scope || !identity) {
         if (!json2.token) { console.log(`::error::${json2.message}`); process.exit(1); }
         const tok = json2.token;
         // Mask the token in the GitHub Actions logs
-        console.log(`::add-mask::${tok}`);
+        // console.log(`::add-mask::${tok}`);
         // Print the token to stdout so it can be captured in bash
         console.log(tok);
     } catch (err) {
