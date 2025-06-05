@@ -41,8 +41,12 @@ runs:
           echo "==> Processing [ scope: ${scope},  identity: ${identity}, branch: ${branch} ]"
 
           echo "  ==> Requesting token from Octo STS (${INPUT_DOMAIN})"
-          INPUT_SCOPE="${scope}" INPUT_IDENTITY="${identity}" node "${GITHUB_ACTION_PATH}/index.js"
+          INPUT_SCOPE="${scope}" INPUT_IDENTITY="${identity}" node "${GITHUB_ACTION_PATH}/request-token.js"
 
           echo "  ==> Cloning repository"
           GH_TOKEN=$(cat /tmp/octo-sts-token) gh repo clone "${scope}" "${GITHUB_WORKSPACE}/${scope}" -- --branch "${branch}" --depth 1
+
+          echo "  ==> Revoking token"
+          TOKEN=$(cat /tmp/octo-sts-token) node "${GITHUB_ACTION_PATH}/revoke-token.js"
+          rm --force /tmp/octo-sts-token
         done
