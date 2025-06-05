@@ -7,7 +7,7 @@ const tok = process.env.TOKEN;
       headers: { Authorization: `Bearer ${tok}` }
     })
 
-    if (res.status == 204) {
+    if (res.status === 204) {
       console.log('    ==> Token revoked successfully')
     } else {
       console.log(`::error::${res.status} ${res.statusText}`)
