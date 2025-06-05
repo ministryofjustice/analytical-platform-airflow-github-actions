@@ -16,6 +16,7 @@ runs:
       id: octo_sts
       shell: bash
       run: |
+        # Check if .github/analytical-platform/octo-sts.yml exists
         if [[ ! -f ".github/analytical-platform/octo-sts.yml" ]]; then
           echo ".github/analytical-platform/octo-sts.yml not found, skipping Octo STS"
           exit 0
