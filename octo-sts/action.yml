@@ -12,8 +12,8 @@ outputs: {}
 runs:
   using: composite
   steps:
-    - name: Octo STS
-      id: octo_sts
+    - name: Check if .github/analytical-platform/octo-sts.json exists
+      id: check_octo_sts_config_exists
       shell: bash
       run: |
         # Check if .github/analytical-platform/octo-sts.json exists
@@ -22,16 +22,26 @@ runs:
           exit 0
         fi
 
+    - name: Clone octo-sts/action
+      id: clone_octo_sts_action
+      shell: bash
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
         # Clone octo-sts/action
         gh repo clone octo-sts/action /tmp/octo-sts -- --branch v1.0.0 --depth 1
 
         # Debug
         ls -lrta /tmp/octo-sts
 
-        # Loop over .github/analytical-platform/octo-sts.json
-        jq -c '.[]' example/octo-sts.json | while read -r item; do
-          scope=$(echo "${item}" | jq -r '.scope')
-          identity=$(echo "${item}" | jq -r '.identity')
-          echo "Scope: ${scope}, Identity: ${identity}"
-        done
+    # - name: Run octo-sts
+    #   id: run_octo_sts
+    #   shell: bash
+    #   run: |
+    #     # Loop over .github/analytical-platform/octo-sts.json
+    #     jq -c '.[]' example/octo-sts.json | while read -r item; do
+    #       scope=$(echo "${item}" | jq -r '.scope')
+    #       identity=$(echo "${item}" | jq -r '.identity')
+    #       echo "Scope: ${scope}, Identity: ${identity}"
+    #     done
 
