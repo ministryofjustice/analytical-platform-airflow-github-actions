@@ -1,14 +1,13 @@
 ---
 name: Octo STS
-author: Ministry of Justice Analytical Platform (analytical-platform@justice.gov.uk)
-description: TBC
 
 branding:
   color: purple
   icon: git-merge
 
-# inputs:
-# outputs:
+inputs: {}
+
+outputs: {}
 
 runs:
   using: composite
