@@ -1,19 +1,18 @@
 const tok = process.env.TOKEN;
 
 (async function main() {
-    try {
-        const res = await fetch('https://api.github.com/installation/token', {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${tok}` },
-        });
+  try {
+    const res = await fetch("https://api.github.com/installation/token", {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${tok}` },
+    });
 
-        if (res.status == 204) {
-            console.log('    ==> Token revoked successfully');
-        } else {
-            console.log(`::error::${res.status} ${res.statusText}`);
-        }
-    } catch (err) {
-        console.log(`::error::${err.stack}`);
+    if (res.status == 204) {
+      console.log("    ==> Token revoked successfully");
+    } else {
+      console.log(`::error::${res.status} ${res.statusText}`);
     }
-
+  } catch (err) {
+    console.log(`::error::${err.stack}`);
+  }
 })();
