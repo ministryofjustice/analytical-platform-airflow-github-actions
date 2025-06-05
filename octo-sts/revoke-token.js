@@ -8,7 +8,7 @@ const tok = process.env.TOKEN;
         });
 
         if (res.status == 204) {
-            console.log('Token was revoked!');
+            console.log('  ====> Token revoked successfully');
         } else {
             console.log(`::error::${res.status} ${res.statusText}`);
         }
