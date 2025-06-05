@@ -18,6 +18,6 @@ runs:
       run: |
         ls -lrta
 
-        git clone --depth 1 --branch v1.0.0 https://github.com/octo-sts/action.git /tmp/octo-sts
+        gh repo clone octo-sts/action /tmp/octo-sts -- --branch v1.0.0 --depth 1
 
         ls -lrta /tmp/octo-sts
