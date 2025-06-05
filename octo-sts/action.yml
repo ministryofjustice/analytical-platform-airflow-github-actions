@@ -9,7 +9,6 @@ inputs:
   token:
     description: 'GitHub token to use for authentication'
     required: true
-    default: ${{ secrets.GITHUB_TOKEN }}
 
 outputs: {}
 
