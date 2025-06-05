@@ -38,7 +38,8 @@ runs:
 
           echo "Processing [ scope: ${scope},  identity: ${identity} ]"
 
-          INPUT_SCOPE="${scope}" INPUT_IDENTITY="${identity}" node "${GITHUB_ACTION_PATH}/index.js"
+          ghToken=$(INPUT_SCOPE="${scope}" INPUT_IDENTITY="${identity}" node "${GITHUB_ACTION_PATH}/index.js")
+          export ghToken
 
-          GH_TOKEN="${{ env.octo-token }}" gh repo clone "${scope}" "${GITHUB_WORKSPACE}/${scope}" -- --branch "${branch}" --depth 1
+          GH_TOKEN="${ghToken}" gh repo clone "${scope}" "${GITHUB_WORKSPACE}/${scope}" -- --branch "${branch}" --depth 1
         done

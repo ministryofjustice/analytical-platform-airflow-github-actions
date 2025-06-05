@@ -24,9 +24,10 @@ if (!scope || !identity) {
 
         if (!json2.token) { console.log(`::error::${json2.message}`); process.exit(1); }
         const tok = json2.token;
+        // Mask the token in the GitHub Actions logs
         console.log(`::add-mask::${tok}`);
-        const fs = require('fs');
-        fs.appendFile(process.env.GITHUB_ENV, `octo-token=${tok}`, function (err) { if (err) throw err; }); // Write to GITHUB_ENV.
+        // Print the token to stdout so it can be captured in bash
+        console.log(tok);
     } catch (err) {
         console.log(`::error::${err.stack}`); process.exit(1);
     }
