@@ -38,8 +38,10 @@ runs:
 
           echo "Processing [ scope: ${scope},  identity: ${identity} ]"
 
+          echo "Requestion token"
           ghToken=$(INPUT_SCOPE="${scope}" INPUT_IDENTITY="${identity}" node "${GITHUB_ACTION_PATH}/index.js")
           export ghToken
 
+          echo "Cloning repository"
           GH_TOKEN="${ghToken}" gh repo clone "${scope}" "${GITHUB_WORKSPACE}/${scope}" -- --branch "${branch}" --depth 1
         done
