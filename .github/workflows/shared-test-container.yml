@@ -10,6 +10,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      id-token: write
     steps:
       - name: Checkout
         id: checkout
@@ -17,9 +18,13 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Octo STS
+        id: octo_sts
+        uses: ministryofjustice/analytical-platform-airflow-github-actions/octo-sts@octo-sts # octo-sts
+
       - name: Set Up Container Structure Test
         id: setup_container_structure_test
-        uses: ministryofjustice/github-actions/setup-container-structure-test@db1a54895bf5fb975c60af47e5a3aab96505ca3e # v18.6.0
+        uses: ministryofjustice/analytical-platform-github-actions/setup-container-structure-test@319361378084213c1d2495e562c580bc8d2f8b62 # v2.9.0
 
       - name: Fetch Container Structure Test
         id: fetch_container_structure_test
