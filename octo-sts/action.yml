@@ -42,7 +42,7 @@ runs:
       shell: bash
       run: |
         # Loop over .github/analytical-platform/octo-sts.json
-        jq -c '.[]' example/octo-sts.json | while read -r item; do
+        jq -c '.[]' .github/analytical-platform/octo-sts.json | while read -r item; do
           scope=$(echo "${item}" | jq -r '.scope')
           identity=$(echo "${item}" | jq -r '.identity')
           echo "Scope: ${scope}, Identity: ${identity}"
