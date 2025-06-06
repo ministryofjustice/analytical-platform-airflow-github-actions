@@ -16,6 +16,8 @@ if (!scope || !identity) {
   process.exit(1)
 }
 
+const temporaryTokenFile = process.env.TEMPORARY_TOKEN_FILE
+
 (async function main () {
   // You can use await inside this function block
   try {
@@ -39,8 +41,7 @@ if (!scope || !identity) {
     console.log(`::add-mask::${tok}`)
     // Write the token to /tmp/octo-sts-token
     const fs = require('fs')
-    const path = '/tmp/octo-sts-token'
-    fs.writeFileSync(path, tok)
+    fs.writeFileSync(temporaryTokenFile, tok)
   } catch (err) {
     console.log(`::error::${err.stack}`)
     process.exit(1)

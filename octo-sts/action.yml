@@ -6,47 +6,51 @@ branding:
   icon: git-merge
 
 inputs:
+  octo-sts-configuration:
+    description: The path to the Octo STS configuration file
+    required: false
+    default: .github/analytical-platform/octo-sts.json
   octo-sts-domain:
     description: The domain of the Octo STS instance to use to federate
     required: false
     default: octo-sts.dev
+  temporary-token-file:
+    description: The file where the temporary token will be stored
+    required: false
+    default: /tmp/octo-sts-token
 
 outputs: {}
 
 runs:
   using: composite
   steps:
-    - name: Check if .github/analytical-platform/octo-sts.json exists
-      id: check_octo_sts_config_exists
-      shell: bash
-      run: |
-        if [[ ! -f ".github/analytical-platform/octo-sts.json" ]]; then
-          echo ".github/analytical-platform/octo-sts.json not found, skipping Octo STS"
-          exit 0
-        fi
-
-    - name: Run octo-sts
+    - name: Run Octo STS
       id: run_octo_sts
       shell: bash
       env:
-        INPUT_DOMAIN: ${{ inputs.octo-sts-domain }}
+        OCTO_STS_CONFIGURATION: ${{ inputs.octo-sts-configuration }}
+        OCTO_STS_DOMAIN: ${{ inputs.octo-sts-domain }}
+        TEMPORARY_TOKEN_FILE: ${{ inputs.temporary-token-file }}
       run: |
-        # Loop over .github/analytical-platform/octo-sts.json
-        jq -c '.[]' .github/analytical-platform/octo-sts.json | while read -r item; do
-          # Extract scope, identity, and branch from the item
-          scope=$(echo "${item}" | jq -r '.scope')
-          identity=$(echo "${item}" | jq -r '.identity')
-          branch=$(echo "${item}" | jq -r '.branch')
+        if [[ -f "${OCTO_STS_CONFIGURATION}" ]]; then
+          echo "Found ${OCTO_STS_CONFIGURATION}"
+          jq -c '.[]' ${OCTO_STS_CONFIGURATION} | while read -r item; do
+            # Extract scope, identity, and branch from the item
+            scope=$(echo "${item}" | jq -r '.scope')
+            identity=$(echo "${item}" | jq -r '.identity')
+            branch=$(echo "${item}" | jq -r '.branch')
 
-          echo "==> Processing [ scope: ${scope},  identity: ${identity}, branch: ${branch} ]"
+            echo "==> Processing [ scope: ${scope},  identity: ${identity}, branch: ${branch} ]"
 
-          echo "  ==> Requesting token from Octo STS (${INPUT_DOMAIN})"
-          INPUT_SCOPE="${scope}" INPUT_IDENTITY="${identity}" node "${GITHUB_ACTION_PATH}/request-token.js"
+            echo "  ==> Requesting token from Octo STS (${OCTO_STS_DOMAIN})"
+            INPUT_DOMAIN="${OCTO_STS_DOMAIN}" INPUT_IDENTITY="${identity}" INPUT_SCOPE="${scope}" node "${GITHUB_ACTION_PATH}/request-token.js"
 
-          echo "  ==> Cloning repository"
-          GH_TOKEN=$(cat /tmp/octo-sts-token) gh repo clone "${scope}" "${GITHUB_WORKSPACE}/${scope}" -- --branch "${branch}" --depth 1
+            echo "  ==> Cloning repository"
+            GH_TOKEN=$(cat "${TEMPORARY_TOKEN_FILE}") gh repo clone "${scope}" "${GITHUB_WORKSPACE}/${scope}" -- --branch "${branch}" --depth 1
 
-          echo "  ==> Revoking token"
-          TOKEN=$(cat /tmp/octo-sts-token) node "${GITHUB_ACTION_PATH}/revoke-token.js"
-          rm --force /tmp/octo-sts-token
+            echo "  ==> Revoking token"
+            TOKEN=$(cat "${TEMPORARY_TOKEN_FILE}") node "${GITHUB_ACTION_PATH}/revoke-token.js"
+            rm --force "${TEMPORARY_TOKEN_FILE}"
+          else
+            echo "No Octo STS configuration found in ${OCTO_STS_CONFIGURATION}"
         done
