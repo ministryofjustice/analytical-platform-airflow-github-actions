@@ -1,0 +1,6 @@
+---
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        ministryofjustice/analytical-platform-airflow-github-actions/*: ref-pin
