@@ -1,5 +1,1 @@
 .devcontainer/devcontainer-lock.json
-
-# These files are linted by standard (https://standardjs.com)
-octo-sts/request-token.js
-octo-sts/revoke-token.js

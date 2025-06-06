@@ -20,7 +20,7 @@ jobs:
 
       - name: Octo STS
         id: octo_sts
-        uses: ministryofjustice/analytical-platform-airflow-github-actions/octo-sts@octo-sts # octo-sts
+        uses: ministryofjustice/analytical-platform-github-actions/octo-sts@feat/octo-sts # TEST
 
       - name: Set Up Container Structure Test
         id: setup_container_structure_test
