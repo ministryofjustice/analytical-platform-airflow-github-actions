@@ -51,6 +51,6 @@ runs:
             echo "  ==> Revoking token"
             TOKEN=$(cat "${TEMPORARY_TOKEN_FILE}") node "${GITHUB_ACTION_PATH}/revoke-token.js"
             rm --force "${TEMPORARY_TOKEN_FILE}"
-          else
+        else
             echo "No Octo STS configuration found in ${OCTO_STS_CONFIGURATION}"
         done
