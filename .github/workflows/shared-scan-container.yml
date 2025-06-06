@@ -17,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write
       pull-requests: write
     steps:
       - name: Checkout
@@ -24,6 +25,10 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
+
+      - name: Octo STS
+        id: octo_sts
+        uses: ministryofjustice/analytical-platform-github-actions/octo-sts@feat/octo-sts # TEST
 
       - name: Clean Actions Runner
         id: clean_actions_runner

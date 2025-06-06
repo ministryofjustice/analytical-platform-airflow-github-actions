@@ -17,6 +17,10 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Octo STS
+        id: octo_sts
+        uses: ministryofjustice/analytical-platform-github-actions/octo-sts@feat/octo-sts # TEST
+
       - name: Clean Actions Runner
         id: clean_actions_runner
         uses: ministryofjustice/analytical-platform-github-actions/clean-actions-runner@319361378084213c1d2495e562c580bc8d2f8b62 # v2.9.0
