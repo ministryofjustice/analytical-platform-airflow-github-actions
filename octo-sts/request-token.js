@@ -18,7 +18,7 @@ if (!scope || !identity) {
 
 const temporaryTokenFile = process.env.TEMPORARY_TOKEN_FILE
 
-(async function main () {
+;(async function main () {
   // You can use await inside this function block
   try {
     const res = await fetch(`${actionsUrl}&audience=octo-sts.dev`, {

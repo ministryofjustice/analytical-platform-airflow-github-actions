@@ -33,7 +33,7 @@ runs:
         TEMPORARY_TOKEN_FILE: ${{ inputs.temporary-token-file }}
       run: |
         if [[ -f "${OCTO_STS_CONFIGURATION}" ]]; then
-          echo "Found ${OCTO_STS_CONFIGURATION}"
+          echo "Found Octo STS configuration at ${OCTO_STS_CONFIGURATION}"
           jq -c '.[]' ${OCTO_STS_CONFIGURATION} | while read -r item; do
             # Extract scope, identity, and branch from the item
             scope=$(echo "${item}" | jq -r '.scope')
@@ -53,5 +53,5 @@ runs:
             rm --force "${TEMPORARY_TOKEN_FILE}"
           done
         else
-          echo "No Octo STS configuration found in ${OCTO_STS_CONFIGURATION}"
+          echo "No Octo STS configuration found at ${OCTO_STS_CONFIGURATION}"
         fi
