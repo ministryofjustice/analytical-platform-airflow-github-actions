@@ -72,6 +72,7 @@ jobs:
           ignore-unfixed: true
           vuln-type: library
           timeout: ${{ inputs.trivy_timeout }}
+          skip-dirs: "/home/analyticalplatform/.cache/R,/usr/local/lib/R/site-library/openssl/doc"
           exit-code: 1
 
       - name: Comment on Scan Success
