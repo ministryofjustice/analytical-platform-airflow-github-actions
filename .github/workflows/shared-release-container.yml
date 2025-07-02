@@ -84,6 +84,8 @@ jobs:
           context: .
           push: true
           tags: ${{ steps.ecr_login.outputs.registry }}/${{ env.ECR_REPOSITORY_NAME }}:${{ github.ref_name }}
+          build-args: |
+            MOJAP_IMAGE_VERSION=${{ github.ref_name }}
 
       - name: Sign
         id: sign
