@@ -28,11 +28,11 @@ jobs:
 
       - name: Octo STS
         id: octo_sts
-        uses: ministryofjustice/analytical-platform-github-actions/octo-sts@df5fa543cab50de34ac4c1ccd6f85617744bf9e4 # v4.0.0
+        uses: ministryofjustice/analytical-platform-github-actions/octo-sts@4955b4d040ce9687476956ab7d28a997bb727432 # v4.2.0
 
       - name: Clean Actions Runner
         id: clean_actions_runner
-        uses: ministryofjustice/analytical-platform-github-actions/clean-actions-runner@df5fa543cab50de34ac4c1ccd6f85617744bf9e4 # v4.0.0
+        uses: ministryofjustice/analytical-platform-github-actions/clean-actions-runner@4955b4d040ce9687476956ab7d28a997bb727432 # v4.2.0
         with:
           confirm: true
 
