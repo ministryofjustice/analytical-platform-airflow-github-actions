@@ -20,11 +20,11 @@ jobs:
 
       - name: Octo STS
         id: octo_sts
-        uses: ministryofjustice/analytical-platform-github-actions/octo-sts@0de1649937202e1839c7ebb903f2fdd1ad03c6d9 # v4.3.0
+        uses: ministryofjustice/analytical-platform-github-actions/octo-sts@8fb2a9ef59f5f62359b03ec3ef1b31aaa433150c # v4.4.0
 
       - name: Set Up Container Structure Test
         id: setup_container_structure_test
-        uses: ministryofjustice/analytical-platform-github-actions/setup-container-structure-test@0de1649937202e1839c7ebb903f2fdd1ad03c6d9 # v4.3.0
+        uses: ministryofjustice/analytical-platform-github-actions/setup-container-structure-test@8fb2a9ef59f5f62359b03ec3ef1b31aaa433150c # v4.4.0
 
       - name: Fetch Container Structure Test
         id: fetch_container_structure_test
