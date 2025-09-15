@@ -78,7 +78,7 @@ jobs:
       - name: Comment on Scan Success
         id: comment_on_scan_success
         if: steps.scan.outcome == 'success'
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         with:
           script: |
             github.rest.issues.createComment({
@@ -91,7 +91,7 @@ jobs:
       - name: Comment on Scan Failure
         id: comment_on_scan_failure
         if: failure() && steps.scan.outcome == 'failure'
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         with:
           script: |
             github.rest.issues.createComment({
