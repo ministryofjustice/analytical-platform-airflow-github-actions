@@ -3,7 +3,7 @@ on:
   workflow_call:
     inputs:
       clean-runner:
-        description: 'Clean the Actions runner before running tests'
+        description: "Clean the Actions runner before running tests"
         required: false
         type: boolean
         default: false
