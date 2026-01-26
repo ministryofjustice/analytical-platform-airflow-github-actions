@@ -9,6 +9,12 @@ updates:
     commit-message:
       prefix: ":dependabot: github-actions"
       include: "scope"
+    cooldown:
+      default-days: 7
+      exclude:
+        - "ministryofjustice/action*"
+        - "ministryofjustice/analytical-platform-github-actions*"
+    open-pull-requests-limit: 15
   - package-ecosystem: "devcontainers"
     directory: "/"
     schedule:
@@ -16,3 +22,8 @@ updates:
     commit-message:
       prefix: ":dependabot: devcontainers"
       include: "scope"
+    cooldown:
+      default-days: 7
+      exclude:
+        - "ghcr.io/ministryofjustice/devcontainer-feature/*"
+    open-pull-requests-limit: 15
