@@ -42,8 +42,6 @@ jobs:
         env:
           RUNTIME: ${{ inputs.runtime }}
         run: |
-          imageVersion=$(grep "^FROM" Dockerfile | cut -d':' -f2 | cut -d'@' -f1)
-
           curl --silent --show-error --location "https://raw.githubusercontent.com/ministryofjustice/analytical-platform-airflow-${RUNTIME}-base/main/.trivyignore" --output "analytical-platform-airflow-${RUNTIME}-base-trivyignore"
 
           if [[ ! -f .trivyignore ]]; then
