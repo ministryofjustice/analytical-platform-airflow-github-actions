@@ -44,7 +44,7 @@ jobs:
         run: |
           imageVersion=$(grep "^FROM" Dockerfile | cut -d':' -f2 | cut -d'@' -f1)
 
-          curl --silent --show-error --location "https://raw.githubusercontent.com/ministryofjustice/analytical-platform-airflow-${RUNTIME}-base/refs/tags/${imageVersion}/.trivyignore" --output "analytical-platform-airflow-${RUNTIME}-base-trivyignore"
+          curl --silent --show-error --location "https://raw.githubusercontent.com/ministryofjustice/analytical-platform-airflow-${RUNTIME}-base/main/.trivyignore" --output "analytical-platform-airflow-${RUNTIME}-base-trivyignore"
 
           if [[ ! -f .trivyignore ]]; then
             mv "analytical-platform-airflow-${RUNTIME}-base-trivyignore" .trivyignore
