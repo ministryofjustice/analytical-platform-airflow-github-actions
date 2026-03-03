@@ -72,8 +72,6 @@ jobs:
           timeout: ${{ inputs.trivy_timeout }}
           skip-dirs: "/home/analyticalplatform/.cache/R,/usr/local/lib/R/site-library/openssl/doc"
           exit-code: 1
-          version: "v0.69.2"
-
       - name: Comment on Scan Success
         id: comment_on_scan_success
         if: steps.scan.outcome == 'success'
