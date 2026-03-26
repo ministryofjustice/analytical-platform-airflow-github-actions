@@ -41,9 +41,7 @@ jobs:
         env:
           RUNTIME: ${{ inputs.runtime }}
         run: |
-          imageVersion=$(grep "^FROM" Dockerfile | cut -d':' -f2 | cut -d'@' -f1)
-
-          curl --silent --show-error --fail --location "https://raw.githubusercontent.com/ministryofjustice/analytical-platform-airflow-${RUNTIME}-base/refs/tags/${imageVersion}/.snyk" --output "analytical-platform-airflow-${RUNTIME}-base-snyk" || true
+          curl --silent --show-error --fail --location "https://raw.githubusercontent.com/ministryofjustice/analytical-platform-airflow-${RUNTIME}-base/main/.snyk" --output "analytical-platform-airflow-${RUNTIME}-base-snyk" || true
 
           if [[ -f "analytical-platform-airflow-${RUNTIME}-base-snyk" ]]; then
             if [[ ! -f .snyk ]]; then
