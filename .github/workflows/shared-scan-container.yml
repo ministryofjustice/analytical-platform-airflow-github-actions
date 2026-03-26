@@ -5,10 +5,9 @@ on:
       runtime:
         type: string
         required: true
-      trivy_timeout:
-        type: string
-        required: false
-        default: "15m0s"
+    secrets:
+      SNYK_TOKEN:
+        required: true
 
 permissions: {}
 
@@ -36,18 +35,23 @@ jobs:
         with:
           confirm: true
 
-      - name: Generate .trivyignore
-        id: generate_trivyignore
+      - name: Generate .snyk
+        id: generate_snyk_policy
         shell: bash
         env:
           RUNTIME: ${{ inputs.runtime }}
         run: |
-          curl --silent --show-error --location "https://raw.githubusercontent.com/ministryofjustice/analytical-platform-airflow-${RUNTIME}-base/main/.trivyignore" --output "analytical-platform-airflow-${RUNTIME}-base-trivyignore"
+          imageVersion=$(grep "^FROM" Dockerfile | cut -d':' -f2 | cut -d'@' -f1)
 
-          if [[ ! -f .trivyignore ]]; then
-            mv "analytical-platform-airflow-${RUNTIME}-base-trivyignore" .trivyignore
-          else
-            cat "analytical-platform-airflow-${RUNTIME}-base-trivyignore" >> .trivyignore
+          curl --silent --show-error --fail --location "https://raw.githubusercontent.com/ministryofjustice/analytical-platform-airflow-${RUNTIME}-base/refs/tags/${imageVersion}/.snyk" --output "analytical-platform-airflow-${RUNTIME}-base-snyk" || true
+
+          if [[ -f "analytical-platform-airflow-${RUNTIME}-base-snyk" ]]; then
+            if [[ ! -f .snyk ]]; then
+              mv "analytical-platform-airflow-${RUNTIME}-base-snyk" .snyk
+            else
+              yq eval-all 'select(fileIndex == 0) *+ select(fileIndex == 1)' .snyk "analytical-platform-airflow-${RUNTIME}-base-snyk" > .snyk.merged
+              mv .snyk.merged .snyk
+            fi
           fi
 
       - name: Build
@@ -60,7 +64,13 @@ jobs:
 
       - name: Scan
         id: scan
-        run: exit 0 # trivy-action step removed
+        uses: snyk/actions/docker@806182742461562b67788a64410098c9d9b96adb # v0.4.0
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          image: ${{ github.sha }}
+          args: --severity-threshold=high --app-vulns --policy-path=.snyk --exclude-app-vulns=false
+
       - name: Comment on Scan Success
         id: comment_on_scan_success
         if: steps.scan.outcome == 'success'
