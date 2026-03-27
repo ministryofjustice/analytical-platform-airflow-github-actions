@@ -80,13 +80,6 @@ jobs:
           image: ${{ github.sha }}
           args: --severity-threshold=high --policy-path=.snyk --sarif-file-output=snyk.sarif
 
-      - name: Upload SARIF
-        id: upload_sarif
-        uses: github/codeql-action/upload-sarif@cb06a0a8527b2c6970741b3a0baa15231dc74a4c # v4.34.1
-        if: always() && steps.scan.outcome != 'skipped'
-        with:
-          sarif_file: snyk.sarif
-
       - name: Evaluate Scan Result
         id: evaluate_scan_result
         if: steps.scan.outcome == 'failure'
