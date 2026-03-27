@@ -36,6 +36,20 @@ jobs:
         with:
           confirm: true
 
+      - name: Configure AWS Credentials
+        id: configure_aws_credentials
+        uses: aws-actions/configure-aws-credentials@8df5847569e6427dd6c4fb1cf565c83acfa8afa7 # v6.0.0
+        with:
+          aws-region: eu-west-2
+          role-to-assume: arn:aws:iam::509399598587:role/snyk-analytical-platform-airflow-container-scanning
+
+      - name: Retrieve AWS Secrets Manager Secrets
+        id: retrieve_aws_secrets_manager_secrets
+        uses: aws-actions/aws-secretsmanager-get-secrets@3a411b6ec5cace3d626412dd917e7bfeac242cfa # v3.0.0
+        with:
+          secret-ids: |
+            SNYK_TOKEN, snyk/analytical-platform-airflow-container-scanning
+
       - name: Generate .snyk
         id: generate_snyk_policy
         shell: bash
@@ -65,8 +79,6 @@ jobs:
         id: scan
         continue-on-error: true
         uses: snyk/actions/docker@806182742461562b67788a64410098c9d9b96adb # v0.4.0
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           image: ${{ github.sha }}
           args: --severity-threshold=high --policy-path=.snyk --sarif-file-output=snyk.sarif
