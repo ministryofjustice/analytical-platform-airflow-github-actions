@@ -73,8 +73,8 @@ jobs:
 
       - name: Scan
         id: scan
-        continue-on-error: true
         uses: snyk/actions/docker@806182742461562b67788a64410098c9d9b96adb # v0.4.0
+        continue-on-error: true
         with:
           image: ${{ github.sha }}
           args: --severity-threshold=high --policy-path=.snyk --sarif-file-output=snyk.sarif
