@@ -58,9 +58,34 @@ jobs:
           push: false
           tags: ${{ github.sha }}
 
+      - name: Install Trivy from S3
+        id: install_trivy
+        shell: bash
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          aws s3 cp "s3://analytical-platform-shared-artifacts/trivy/trivy" "$HOME/.local/bin/trivy"
+          chmod +x "$HOME/.local/bin/trivy"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          "$HOME/.local/bin/trivy" --version
+
       - name: Scan
         id: scan
-        run: exit 0 # trivy-action step removed
+        shell: bash
+        env:
+          TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db:2
+          TRIVY_JAVA_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-java-db:1
+          TRIVY_TIMEOUT: ${{ inputs.trivy_timeout }}
+        run: |
+          trivy image \
+            --severity HIGH,CRITICAL \
+            --ignore-unfixed \
+            --vuln-type library \
+            --timeout "$TRIVY_TIMEOUT" \
+            --skip-dirs "/home/analyticalplatform/.cache/R" \
+            --skip-dirs "/usr/local/lib/R/site-library/openssl/doc" \
+            --exit-code 1 \
+            "${{ github.sha }}"
+
       - name: Comment on Scan Success
         id: comment_on_scan_success
         if: steps.scan.outcome == 'success'
