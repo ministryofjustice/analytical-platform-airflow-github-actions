@@ -81,8 +81,8 @@ jobs:
           mkdir -p "$HOME/.local/bin"
           TRIVY_ARCHIVE="trivy_0.69.3_Linux-64bit.tar.gz"
           TRIVY_CHECKSUM_FILE="trivy_0.69.3_checksum.txt"
-          aws s3 cp "s3://mojap-common-production-artifacts/trivy/${TRIVY_ARCHIVE}" "$HOME/.local/bin/${TRIVY_ARCHIVE}"
-          aws s3 cp "s3://mojap-common-production-artifacts/trivy/${TRIVY_CHECKSUM_FILE}" "$HOME/.local/bin/${TRIVY_CHECKSUM_FILE}"
+          aws s3 cp "s3://mojap-common-production-artifacts/trivy/v0.69.3/${TRIVY_ARCHIVE}" "$HOME/.local/bin/${TRIVY_ARCHIVE}"
+          aws s3 cp "s3://mojap-common-production-artifacts/trivy/v0.69.3/${TRIVY_CHECKSUM_FILE}" "$HOME/.local/bin/${TRIVY_CHECKSUM_FILE}"
 
           (cd "$HOME/.local/bin" && grep " ${TRIVY_ARCHIVE}$" "${TRIVY_CHECKSUM_FILE}" | sha256sum --check --status)
 
