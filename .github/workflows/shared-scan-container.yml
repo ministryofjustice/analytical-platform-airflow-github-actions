@@ -63,7 +63,14 @@ jobs:
         shell: bash
         run: |
           mkdir -p "$HOME/.local/bin"
-          aws s3 cp "s3://analytical-platform-shared-artifacts/trivy/trivy" "$HOME/.local/bin/trivy"
+          TRIVY_ARCHIVE="trivy_0.69.3_Linux-64bit.tar.gz"
+          TRIVY_CHECKSUM_FILE="trivy_0.69.3_checksum.txt"
+          aws s3 cp "s3://analytical-platform-shared-artifacts/trivy/${TRIVY_ARCHIVE}" "$HOME/.local/bin/${TRIVY_ARCHIVE}"
+          aws s3 cp "s3://analytical-platform-shared-artifacts/trivy/${TRIVY_CHECKSUM_FILE}" "$HOME/.local/bin/${TRIVY_CHECKSUM_FILE}"
+
+          (cd "$HOME/.local/bin" && grep " ${TRIVY_ARCHIVE}$" "${TRIVY_CHECKSUM_FILE}" | sha256sum --check --status)
+
+          tar -xzf "$HOME/.local/bin/${TRIVY_ARCHIVE}" -C "$HOME/.local/bin" trivy
           chmod +x "$HOME/.local/bin/trivy"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           "$HOME/.local/bin/trivy" --version
