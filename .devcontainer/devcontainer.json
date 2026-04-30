@@ -2,7 +2,7 @@
   "name": "analytical-platform-github-actions",
   "image": "ghcr.io/ministryofjustice/devcontainer-base:latest",
   "features": {
-    "ghcr.io/ministryofjustice/devcontainer-feature/astral:1": {}
+    "ghcr.io/ministryofjustice/devcontainer-feature/astral:": {}
   },
   "customizations": {
     "vscode": {
