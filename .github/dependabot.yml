@@ -28,3 +28,6 @@ updates:
       analytical-platform-github-actions:
         patterns:
           - "ministryofjustice/analytical-platform-github-actions*"
+    open-pull-requests-limit: 15
+    schedule:
+      interval: "daily"
