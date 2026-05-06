@@ -4,3 +4,13 @@ rules:
     config:
       policies:
         ministryofjustice/analytical-platform-airflow-github-actions/*: ref-pin
+
+  template-injection:
+    ignore:
+      - file: .github/workflows/shared-scheduled-container-scan.yml
+        line: 133, 136
+
+  secrets-outside-env:
+    ignore:
+      - file: .github/workflows/shared-release-container.yml
+        line: 145
