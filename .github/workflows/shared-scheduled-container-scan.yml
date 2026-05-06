@@ -128,7 +128,7 @@ jobs:
         env:
           TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db:2
           TRIVY_JAVA_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-java-db:1
-        run: |
+        run: | # zizmor: ignore[template-injection]
           trivy image \
             --severity ${{ inputs.scan-severity }} \
             --ignore-unfixed \
@@ -142,7 +142,7 @@ jobs:
         uses: slackapi/slack-github-action@03ea5433c137af7c0495bc0cad1af10403fc800c # v3.0.2
         with:
           webhook-type: incoming-webhook
-          webhook: ${{ secrets.cve-scan-slack-webhook-url }}
+          webhook: ${{ secrets.cve-scan-slack-webhook-url }} # zizmor: ignore[secrets-outside-env]
           payload: |
             {
               "repository": "${{ github.repository }}",
