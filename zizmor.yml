@@ -7,10 +7,9 @@ rules:
 
   template-injection:
     ignore:
-      - file: .github/workflows/shared-scheduled-container-scan.yml
-        line: 133, 136
+      - .github/workflows/shared-scheduled-container-scan.yml:133
+      - .github/workflows/shared-scheduled-container-scan.yml:136
 
   secrets-outside-env:
     ignore:
-      - file: .github/workflows/shared-release-container.yml
-        line: 145
+      - .github/workflows/shared-release-container.yml:145
