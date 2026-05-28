@@ -10,15 +10,15 @@ output:
 
 fail-on-severity: high
 
-ignore:
-  # Example: ignore specific CVEs
-  # - vulnerability: CVE-2024-1234
-  #   fix-state: unknown
+#ignore:
+# Example: ignore specific CVEs
+# - vulnerability: CVE-2024-1234
+#   fix-state: unknown
 
 # Exclude paths from scanning
-exclude:
-  # - path/to/exclude
+#exclude:
+# - path/to/exclude
 
 match:
- python:
+  python:
     using-cpes: true
