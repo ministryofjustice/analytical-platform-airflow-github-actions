@@ -70,7 +70,7 @@ jobs:
         with:
           image: ${{ github.sha }}
           fail-build: true
-          severity-cutoff: high,critical
+          severity-cutoff: high
           only-fixed: true
           output-format: sarif
           grype-version: 0.85.0
@@ -95,7 +95,7 @@ jobs:
 
           # Generate table format report
           grype "${{ github.sha }}" \
-            --fail-on high,critical \
+            --fail-on high \
             --only-fixed=true \
             --output table \
             | grep -E "(NAME|High|Critical)" \
