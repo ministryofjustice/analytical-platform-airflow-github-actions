@@ -132,17 +132,17 @@ jobs:
         if: always()
         shell: bash
         run: |
-          echo "## Grype Container Scan Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Image:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Severity Cutoff:** \`high,critical\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Only Fixed Vulnerabilities:** \`true\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Grype Version:** \`0.85.0\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Grype Container Scan Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Image:** \`${{ github.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Severity Cutoff:** \`high,critical\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Only Fixed Vulnerabilities:** \`true\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Grype Version:** \`0.85.0\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
 
           if [[ -f grype-scan-report.txt ]]; then
-            echo "### Scan Results" >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-            head -n 50 grype-scan-report.txt >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "### Scan Results" >> "$GITHUB_STEP_SUMMARY"
+            echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
+            head -n 50 grype-scan-report.txt >> "$GITHUB_STEP_SUMMARY"
+            echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
           fi
