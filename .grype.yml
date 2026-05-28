@@ -1,0 +1,24 @@
+---
+# Grype configuration file for container vulnerability scanning
+# https://github.com/anchore/grype#configuration
+
+log:
+  level: info
+
+output:
+  format: table
+
+fail-on-severity: high
+
+ignore:
+  # Example: ignore specific CVEs
+  # - vulnerability: CVE-2024-1234
+  #   fix-state: unknown
+
+# Exclude paths from scanning
+exclude:
+  # - path/to/exclude
+
+match:
+ python:
+    using-cpes: true

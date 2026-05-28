@@ -1,0 +1,164 @@
+---
+on:
+  workflow_call:
+    inputs:
+      runtime:
+        type: string
+        required: true
+      grype-version:
+        type: string
+        required: false
+        default: "0.85.0"
+      scan-severity:
+        type: string
+        required: false
+        default: "high,critical"
+      fail-build:
+        type: string
+        required: false
+        default: "true"
+      only-fixed:
+        type: boolean
+        required: false
+        default: true
+
+permissions: {}
+
+jobs:
+  grype-scan:
+    name: Grype Container Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+      security-events: write
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Octo STS
+        id: octo_sts
+        uses: ministryofjustice/analytical-platform-github-actions/octo-sts@f3b2ed398ec5c17e2f59d983bc01c79c73632246 # v7.3.0
+
+      - name: Clean Actions Runner
+        id: clean_actions_runner
+        uses: ministryofjustice/action-clean-runner@390530713a326ddc099b2114f38dd0f2f8eac6da # v1.1.0
+        with:
+          confirm: true
+
+      - name: Generate .grype.yml Configuration
+        id: generate_grype_config
+        shell: bash
+        env:
+          RUNTIME: ${{ inputs.runtime }}
+        run: |
+          # Try to fetch base .grype.yml from the runtime base repository
+          curl --silent --show-error --location \
+            "https://raw.githubusercontent.com/ministryofjustice/analytical-platform-airflow-${RUNTIME}-base/main/.grype.yml" \
+            --output "analytical-platform-airflow-${RUNTIME}-base-grype.yml" || echo "No base .grype.yml found"
+
+          # If we fetched a base config and no local config exists, use it
+          if [[ -f "analytical-platform-airflow-${RUNTIME}-base-grype.yml" ]] && [[ ! -f .grype.yml ]]; then
+            mv "analytical-platform-airflow-${RUNTIME}-base-grype.yml" .grype.yml
+            echo "Using .grype.yml from base repository"
+          elif [[ ! -f .grype.yml ]]; then
+            echo "No .grype.yml found, Grype will use default configuration"
+          else
+            echo "Using local .grype.yml configuration"
+          fi
+
+      - name: Build Container Image
+        id: build
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
+        with:
+          context: .
+          push: false
+          load: true
+          tags: ${{ github.sha }}
+
+      - name: Run Grype Vulnerability Scanner
+        id: grype_scan
+        uses: anchore/scan-action@55c76c1fd0e36a69d7ba45e6ce4c2433f9f1e1f8 # v6.0.0
+        with:
+          image: ${{ github.sha }}
+          fail-build: ${{ inputs.fail-build }}
+          severity-cutoff: ${{ inputs.scan-severity }}
+          only-fixed: ${{ inputs.only-fixed }}
+          output-format: sarif
+          grype-version: ${{ inputs.grype-version }}
+
+      - name: Upload Grype SARIF Report
+        id: upload_sarif
+        if: always()
+        uses: github/codeql-action/upload-sarif@dd4571f0c6a2c9cf5589ac80597ab6e0ff7aa962 # v3.28.14
+        with:
+          sarif_file: ${{ steps.grype_scan.outputs.sarif }}
+          category: grype-container-scan
+
+      - name: Generate Grype Scan Report (Table Format)
+        id: grype_scan_table
+        if: always()
+        shell: bash
+        run: |
+          # Install Grype if not already available
+          if ! command -v grype &> /dev/null; then
+            curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin v${{ inputs.grype-version }}
+          fi
+
+          # Generate table format report
+          grype "${{ github.sha }}" \
+            --fail-on "${{ inputs.scan-severity }}" \
+            --only-fixed=${{ inputs.only-fixed }} \
+            --output table \
+            | grep -E "(NAME|High|Critical)" \
+            > grype-scan-report.txt || true
+
+      - name: Comment on Scan Success
+        id: comment_on_scan_success
+        if: success() && github.event_name == 'pull_request'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ **Grype Container Scan Passed**\n\nNo vulnerabilities of severity `${{ inputs.scan-severity }}` or higher were found.\n\nView the [Security tab](${{ github.server_url }}/${{ github.repository }}/security/code-scanning) for detailed results.'
+            })
+
+      - name: Comment on Scan Failure
+        id: comment_on_scan_failure
+        if: failure() && steps.grype_scan.outcome == 'failure' && github.event_name == 'pull_request'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '❌ **Grype Container Scan Failed**\n\nVulnerabilities of severity `${{ inputs.scan-severity }}` or higher were detected.\n\nPlease review:\n- The [Security tab](${{ github.server_url }}/${{ github.repository }}/security/code-scanning) for detailed findings\n- The [User Guidance](https://user-guidance.analytical-platform.service.justice.gov.uk/services/airflow/index.html#vulnerability-scanning) for remediation steps\n- The scan artifacts in the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})'
+            })
+
+      - name: Scan Summary
+        id: scan_summary
+        if: always()
+        shell: bash
+        run: |
+          echo "## Grype Container Scan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Severity Cutoff:** \`${{ inputs.scan-severity }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Only Fixed Vulnerabilities:** \`${{ inputs.only-fixed }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Grype Version:** \`${{ inputs.grype-version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [[ -f grype-scan-report.txt ]]; then
+            echo "### Scan Results" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            head -n 50 grype-scan-report.txt >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          fi
