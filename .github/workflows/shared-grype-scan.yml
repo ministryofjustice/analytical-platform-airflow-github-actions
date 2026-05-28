@@ -66,7 +66,7 @@ jobs:
 
       - name: Run Grype Vulnerability Scanner
         id: grype_scan
-        uses: anchore/scan-action@55c76c1fd0e36a69d7ba45e6ce4c2433f9f1e1f8 # v6.0.0
+        uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
         with:
           image: ${{ github.sha }}
           fail-build: true
@@ -78,7 +78,7 @@ jobs:
       - name: Upload Grype SARIF Report
         id: upload_sarif
         if: always()
-        uses: github/codeql-action/upload-sarif@dd4571f0c6a2c9cf5589ac80597ab6e0ff7aa962 # v3.28.14
+        uses: github/codeql-action/upload-sarif@03e4368ac7daa2bd82b3e85262f3bf87ee112f57 # v3.36.0
         with:
           sarif_file: ${{ steps.grype_scan.outputs.sarif }}
           category: grype-container-scan
