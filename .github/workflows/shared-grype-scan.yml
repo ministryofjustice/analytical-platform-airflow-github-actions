@@ -24,10 +24,6 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Octo STS
-        id: octo_sts
-        uses: ministryofjustice/analytical-platform-github-actions/octo-sts@f3b2ed398ec5c17e2f59d983bc01c79c73632246 # v7.3.0
-
       - name: Clean Actions Runner
         id: clean_actions_runner
         uses: ministryofjustice/action-clean-runner@390530713a326ddc099b2114f38dd0f2f8eac6da # v1.1.0
@@ -40,12 +36,10 @@ jobs:
         env:
           RUNTIME: ${{ inputs.runtime }}
         run: |
-          # Try to fetch base .grype.yml from the runtime base repository
           curl --silent --show-error --location \
             "https://raw.githubusercontent.com/ministryofjustice/analytical-platform-airflow-${RUNTIME}-base/main/.grype.yml" \
             --output "analytical-platform-airflow-${RUNTIME}-base-grype.yml" || echo "No base .grype.yml found"
 
-          # If we fetched a base config and no local config exists, use it
           if [[ -f "analytical-platform-airflow-${RUNTIME}-base-grype.yml" ]] && [[ ! -f .grype.yml ]]; then
             mv "analytical-platform-airflow-${RUNTIME}-base-grype.yml" .grype.yml
             echo "Using .grype.yml from base repository"
@@ -86,42 +80,28 @@ jobs:
         id: grype_scan_table
         if: always()
         shell: bash
+        env:
+          IMAGE_TAG: ${{ github.sha }}
         run: |
-          # Install Grype if not already available
           if ! command -v grype &> /dev/null; then
             curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
           fi
 
-          echo "=== Checking container filesystem (override entrypoint) ==="
-          docker run --rm --entrypoint /bin/sh "${{ github.sha }}" -c "which python || which python3" 2>&1 || echo "Python not found"
-          docker run --rm --entrypoint /bin/sh "${{ github.sha }}" -c "python -m pip list 2>&1 | head -n 50 || python3 -m pip list 2>&1 | head -n 50" || echo "Could not list packages"
-          
-          echo ""
-          echo "=== Checking for Python package metadata directories ==="
-          docker run --rm --entrypoint /bin/sh "${{ github.sha }}" -c "find /usr/local/lib -name '*.dist-info' -o -name '*.egg-info' 2>/dev/null | head -n 20" || echo "No metadata found"
-          
-          echo ""
-          echo "=== Checking for specific packages ==="
-          docker run --rm --entrypoint /bin/sh "${{ github.sha }}" -c "python -m pip show jupyterlab nltk boto3 2>&1 || python3 -m pip show jupyterlab nltk boto3 2>&1" || echo "Could not check packages"
-          
-          echo ""
-          echo "=== Running Grype scan ==="
-          grype "${{ github.sha }}" --output table > grype-scan-full.txt 2>&1 || true
+          echo "=== Running Grype (table output, High & Critical only) ==="
+          grype "${IMAGE_TAG}" \
+            --fail-on "" \
+            --only-fixed=false \
+            --output table \
+            --quiet \
+            > grype-scan-full.txt || true
 
-          echo ""
-          echo "=== Full scan output (first 100 lines) ==="
-          head -n 100 grype-scan-full.txt
-          
-          echo ""
-          echo "=== Checking for Python package type vulnerabilities ==="
-          grep -E "TYPE.*python" grype-scan-full.txt || echo "No Python package (TYPE: python) vulnerabilities found"
-
-          echo ""
-          echo "=== Filtering for High and Critical ==="
-          if [[ -f grype-scan-full.txt ]]; then
-            awk 'NR==1 || /Critical/ || /High/' grype-scan-full.txt | grep -v "Medium" | grep -v "Low" | grep -v "Negligible" > grype-scan-report.txt || echo "No High or Critical vulnerabilities found" > grype-scan-report.txt
+          if [[ -s grype-scan-full.txt ]]; then
+            awk 'NR==1 || $0 ~ /(High|Critical)[[:space:]]*$/ || $0 ~ /(High|Critical)[[:space:]]/' grype-scan-full.txt > grype-scan-report.txt
+            if [[ $(wc -l < grype-scan-report.txt) -le 1 ]]; then
+              echo "No High or Critical vulnerabilities found" > grype-scan-report.txt
+            fi
           else
-            echo "Scan failed to generate report" > grype-scan-report.txt
+            echo "Scan produced no output" > grype-scan-report.txt
           fi
 
           echo ""
