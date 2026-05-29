@@ -92,18 +92,26 @@ jobs:
             curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
           fi
 
-          echo "=== Checking for Python packages in container ==="
-          docker run --rm "${{ github.sha }}" pip list 2>&1 | head -n 50 || echo "Could not list packages"
-
+          echo "=== Checking container filesystem (override entrypoint) ==="
+          docker run --rm --entrypoint /bin/sh "${{ github.sha }}" -c "which python || which python3" 2>&1 || echo "Python not found"
+          docker run --rm --entrypoint /bin/sh "${{ github.sha }}" -c "python -m pip list 2>&1 | head -n 50 || python3 -m pip list 2>&1 | head -n 50" || echo "Could not list packages"
+          
           echo ""
-          echo "=== Checking for specific packages (jupyterlab, nltk) ==="
-          docker run --rm "${{ github.sha }}" pip show jupyterlab 2>&1 || echo "jupyterlab not found"
-          docker run --rm "${{ github.sha }}" pip show nltk 2>&1 || echo "nltk not found"
-
+          echo "=== Checking for Python package metadata directories ==="
+          docker run --rm --entrypoint /bin/sh "${{ github.sha }}" -c "find /usr/local/lib -name '*.dist-info' -o -name '*.egg-info' 2>/dev/null | head -n 20" || echo "No metadata found"
+          
+          echo ""
+          echo "=== Checking for specific packages ==="
+          docker run --rm --entrypoint /bin/sh "${{ github.sha }}" -c "python -m pip show jupyterlab nltk boto3 2>&1 || python3 -m pip show jupyterlab nltk boto3 2>&1" || echo "Could not check packages"
+          
           echo ""
           echo "=== Running Grype scan ==="
           grype "${{ github.sha }}" --output table > grype-scan-full.txt 2>&1 || true
 
+          echo ""
+          echo "=== Full scan output (first 100 lines) ==="
+          head -n 100 grype-scan-full.txt
+          
           echo ""
           echo "=== Checking for Python package type vulnerabilities ==="
           grep -E "TYPE.*python" grype-scan-full.txt || echo "No Python package (TYPE: python) vulnerabilities found"
