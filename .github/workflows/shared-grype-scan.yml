@@ -78,7 +78,7 @@ jobs:
       - name: Upload Grype SARIF Report
         id: upload_sarif
         if: always()
-        uses: github/codeql-action/upload-sarif@03e4368ac7daa2bd82b3e85262f3bf87ee112f57 # v3.36.0
+        uses: github/codeql-action/upload-sarif@89a39a4e59826350b863aa6b6252a07ad50cf83e # v4.32.4
         with:
           sarif_file: ${{ steps.grype_scan.outputs.sarif }}
           category: grype-container-scan
