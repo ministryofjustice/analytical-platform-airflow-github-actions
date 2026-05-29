@@ -73,7 +73,6 @@ jobs:
           severity-cutoff: high
           only-fixed: true
           output-format: sarif
-          grype-version: 0.85.0
 
       - name: Upload Grype SARIF Report
         id: upload_sarif
@@ -90,7 +89,7 @@ jobs:
         run: |
           # Install Grype if not already available
           if ! command -v grype &> /dev/null; then
-            curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin v0.85.0
+            curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
           fi
 
           # Generate table format report
