@@ -92,13 +92,17 @@ jobs:
             curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
           fi
 
-          # Generate table format report
-          grype "${{ github.sha }}" \
-            --fail-on high \
-            --only-fixed=true \
-            --output table \
-            | grep -E "(NAME|High|Critical)" \
-            > grype-scan-report.txt || true
+          # Generate table format report (don't fail here, just generate the report)
+          if grype "${{ github.sha }}" --only-fixed=true --output table > grype-scan-report.txt 2>&1; then
+            echo "Grype scan completed successfully"
+          else
+            echo "Grype scan completed with findings or errors" >> grype-scan-report.txt
+          fi
+
+          # Show file info for debugging
+          ls -lh grype-scan-report.txt || echo "File not created"
+          echo "File contents:"
+          head -n 20 grype-scan-report.txt || echo "No content to display"
 
       - name: Comment on Scan Success
         id: comment_on_scan_success
@@ -110,7 +114,7 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '✅ **Grype Container Scan Passed**\n\nNo vulnerabilities of severity `high,critical` or higher were found.\n\nView the [Security tab](${{ github.server_url }}/${{ github.repository }}/security/code-scanning) for detailed results.'
+              body: '✅ **Grype Container Scan Passed** No vulnerabilities of severity `high,critical` or higher were found.'
             })
 
       - name: Comment on Scan Failure
@@ -137,15 +141,20 @@ jobs:
             echo "- **Image:** \`${{ github.sha }}\`"
             echo "- **Severity Cutoff:** \`high,critical\`"
             echo "- **Only Fixed Vulnerabilities:** \`true\`"
-            echo "- **Grype Version:** \`0.85.0\`"
             echo ""
           } >> "$GITHUB_STEP_SUMMARY"
 
-          if [[ -f grype-scan-report.txt ]]; then
+          if [[ -f grype-scan-report.txt ]] && [[ -s grype-scan-report.txt ]]; then
             {
               echo "### Scan Results"
               echo "\`\`\`"
-              head -n 50 grype-scan-report.txt
+              cat grype-scan-report.txt
               echo "\`\`\`"
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            {
+              echo "### Scan Results"
+              echo ""
+              echo "⚠️ No scan results available. The grype-scan-report.txt file was not found or is empty."
             } >> "$GITHUB_STEP_SUMMARY"
           fi
