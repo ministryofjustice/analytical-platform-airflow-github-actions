@@ -71,7 +71,7 @@ jobs:
           image: ${{ github.sha }}
           fail-build: true
           severity-cutoff: high
-          only-fixed: true
+          only-fixed: false
           output-format: sarif
 
       - name: Upload Grype SARIF Report
@@ -92,17 +92,20 @@ jobs:
             curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
           fi
 
-          # Generate table format report (don't fail here, just generate the report)
-          if grype "${{ github.sha }}" --only-fixed=true --output table > grype-scan-report.txt 2>&1; then
-            echo "Grype scan completed successfully"
+          # Generate full report first
+          grype "${{ github.sha }}" --output table > grype-scan-full.txt 2>&1 || true
+
+          # Filter to only show High and Critical vulnerabilities (using awk for better table parsing)
+          if [[ -f grype-scan-full.txt ]]; then
+            awk 'NR==1 || /Critical/ || /High/' grype-scan-full.txt | grep -v "Medium" | grep -v "Low" | grep -v "Negligible" > grype-scan-report.txt || echo "No High or Critical vulnerabilities found" > grype-scan-report.txt
           else
-            echo "Grype scan completed with findings or errors" >> grype-scan-report.txt
+            echo "Scan failed to generate report" > grype-scan-report.txt
           fi
 
           # Show file info for debugging
           ls -lh grype-scan-report.txt || echo "File not created"
           echo "File contents:"
-          head -n 20 grype-scan-report.txt || echo "No content to display"
+          cat grype-scan-report.txt || echo "No content to display"
 
       - name: Comment on Scan Success
         id: comment_on_scan_success
@@ -140,7 +143,7 @@ jobs:
             echo ""
             echo "- **Image:** \`${{ github.sha }}\`"
             echo "- **Severity Cutoff:** \`high,critical\`"
-            echo "- **Only Fixed Vulnerabilities:** \`true\`"
+            echo "- **Only Fixed Vulnerabilities:** \`false\`"
             echo ""
           } >> "$GITHUB_STEP_SUMMARY"
 
