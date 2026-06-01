@@ -1,6 +1,6 @@
 ---
 # Grype configuration file for container vulnerability scanning
-# https://github.com/anchore/grype#configuration
+# https://oss.anchore.com/docs/reference/grype/configuration/
 
 log:
   level: info
