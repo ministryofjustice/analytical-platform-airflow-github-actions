@@ -60,25 +60,6 @@ jobs:
 
       - name: Run Grype Vulnerability Scanner
         id: grype_scan
-        uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
-        with:
-          image: ${{ github.sha }}
-          fail-build: true
-          severity-cutoff: high
-          only-fixed: false
-          output-format: sarif
-
-      - name: Upload Grype SARIF Report
-        id: upload_sarif
-        if: always()
-        uses: github/codeql-action/upload-sarif@89a39a4e59826350b863aa6b6252a07ad50cf83e # v4.32.4
-        with:
-          sarif_file: ${{ steps.grype_scan.outputs.sarif }}
-          category: grype-container-scan
-
-      - name: Generate Grype Scan Report (Table Format)
-        id: grype_scan_table
-        if: always()
         shell: bash
         env:
           IMAGE_TAG: ${{ github.sha }}
@@ -87,14 +68,16 @@ jobs:
             curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
           fi
 
-          echo "=== Running Grype (table output, High & Critical only) ==="
+          # Single scan — emit both SARIF and table output
           grype "${IMAGE_TAG}" \
-            --fail-on "" \
             --only-fixed=false \
+            --output sarif \
+            --file grype-results.sarif \
             --output table \
             --quiet \
-            > grype-scan-full.txt || true
+            > grype-scan-full.txt || GRYPE_EXIT=$?
 
+          # Filter table output to High & Critical only
           if [[ -s grype-scan-full.txt ]]; then
             awk 'NR==1 || $0 ~ /(High|Critical)[[:space:]]*$/ || $0 ~ /(High|Critical)[[:space:]]/' grype-scan-full.txt > grype-scan-report.txt
             if [[ $(wc -l < grype-scan-report.txt) -le 1 ]]; then
@@ -107,6 +90,19 @@ jobs:
           echo ""
           echo "=== Filtered report ==="
           cat grype-scan-report.txt
+
+          # Fail the step if grype found High/Critical (exit code 1)
+          if [[ "${GRYPE_EXIT:-0}" -ne 0 ]]; then
+            exit "${GRYPE_EXIT}"
+          fi
+
+      - name: Upload Grype SARIF Report
+        id: upload_sarif
+        if: always()
+        uses: github/codeql-action/upload-sarif@89a39a4e59826350b863aa6b6252a07ad50cf83e # v4.32.4
+        with:
+          sarif_file: grype-results.sarif
+          category: grype-container-scan
 
       - name: Comment on Scan Success
         id: comment_on_scan_success
@@ -159,6 +155,6 @@ jobs:
             {
               echo "### Scan Results"
               echo ""
-              echo "⚠️ No scan results available. The grype-scan-report.txt file was not found or is empty."
+              echo "No scan results available. The grype-scan-report.txt file was not found or is empty."
             } >> "$GITHUB_STEP_SUMMARY"
           fi
