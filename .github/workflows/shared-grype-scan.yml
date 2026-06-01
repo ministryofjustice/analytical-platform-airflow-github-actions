@@ -68,14 +68,14 @@ jobs:
             curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
           fi
 
-          # Single scan — emit both SARIF and table output
+          # Single scan — emit both SARIF (to file) and table (to stdout)
           grype "${IMAGE_TAG}" \
+            --fail-on high \
             --only-fixed=false \
-            --output sarif \
-            --file grype-results.sarif \
+            --output "sarif=grype-results.sarif" \
             --output table \
             --quiet \
-            > grype-scan-full.txt || GRYPE_EXIT=$?
+            > grype-scan-full.txt
 
           # Filter table output to High & Critical only
           if [[ -s grype-scan-full.txt ]]; then
@@ -90,11 +90,6 @@ jobs:
           echo ""
           echo "=== Filtered report ==="
           cat grype-scan-report.txt
-
-          # Fail the step if grype found High/Critical (exit code 1)
-          if [[ "${GRYPE_EXIT:-0}" -ne 0 ]]; then
-            exit "${GRYPE_EXIT}"
-          fi
 
       - name: Upload Grype SARIF Report
         id: upload_sarif
