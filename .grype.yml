@@ -2,16 +2,7 @@
 # Grype configuration file for container vulnerability scanning
 # https://oss.anchore.com/docs/reference/grype/configuration/
 
-log:
-  level: info
-
-output:
-  format: table
-
-fail-on-severity: high
-
 #ignore:
-# Example: ignore specific CVEs
 # - vulnerability: CVE-2024-1234
 #   fix-state: unknown
 
@@ -19,5 +10,3 @@ fail-on-severity: high
 #exclude:
 # - path/to/exclude
 
-match:
-  python:
