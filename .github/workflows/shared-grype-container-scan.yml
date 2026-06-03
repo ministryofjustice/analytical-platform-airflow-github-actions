@@ -124,7 +124,7 @@ jobs:
 
             const statusLine = passed
               ? '**Grype Container Scan Passed** No vulnerabilities of severity `high,critical` or higher were found.'
-              : '**Grype Container Scan Failed** Vulnerabilities of severity `high,critical` or higher were detected.\n\nPlease review:\n- The [User Guidance](https://user-guidance.analytical-platform.service.justice.gov.uk/services/airflow/index.html#vulnerability-scanning) for remediation steps\n- The scan artifacts in the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})'
+              : '**Grype Container Scan Failed** Vulnerabilities of severity `high,critical` or higher were detected. See the findings below.'
 
             const body = `## Grype Container Scan\n\n${statusLine}\n\n### Findings (High & Critical)\n\`\`\`\n${report}\n\`\`\``
 
