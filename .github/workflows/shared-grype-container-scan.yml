@@ -78,7 +78,7 @@ jobs:
           echo "=== Running Grype (table output, High & Critical only) ==="
           grype "${IMAGE_TAG}" \
             --fail-on "" \
-            --only-fixed=false \
+            --only-fixed=true \
             --output table \
             --quiet \
             > grype-scan-full.txt || true
@@ -162,7 +162,7 @@ jobs:
             echo ""
             echo "- **Image:** \`${{ github.sha }}\`"
             echo "- **Severity Cutoff:** \`high,critical\`"
-            echo "- **Only Fixed Vulnerabilities:** \`false\`"
+            echo "- **Only Fixed Vulnerabilities:** \`true\`"
             echo ""
           } >> "$GITHUB_STEP_SUMMARY"
 
