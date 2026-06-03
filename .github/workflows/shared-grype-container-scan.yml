@@ -43,6 +43,7 @@ jobs:
 
           if [[ -f "${BASE_GRYPE}" ]] && [[ -f .grype.yml ]]; then
             echo "Merging base and local .grype.yml configurations"
+            # shellcheck disable=SC2016
             yq eval-all 'explode(.) as $item ireduce ({}; . *+ $item)' "${BASE_GRYPE}" .grype.yml > merged-grype.yml
             mv merged-grype.yml .grype.yml
           elif [[ -f "${BASE_GRYPE}" ]]; then
