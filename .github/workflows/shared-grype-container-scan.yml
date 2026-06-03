@@ -77,11 +77,12 @@ jobs:
 
           echo "=== Running Grype (table output, High & Critical only) ==="
           grype "${IMAGE_TAG}" \
-            --fail-on "" \
+            --fail-on high \
             --only-fixed=true \
             --output table \
             --quiet \
-            > grype-scan-full.txt || true
+            > grype-scan-full.txt || GRYPE_EXIT_CODE=$?
+          GRYPE_EXIT_CODE=${GRYPE_EXIT_CODE:-0}
 
           if [[ -s grype-scan-full.txt ]]; then
             awk 'NR==1 || $0 ~ /(High|Critical)[[:space:]]*$/ || $0 ~ /(High|Critical)[[:space:]]/' grype-scan-full.txt > grype-scan-report.txt
@@ -102,10 +103,11 @@ jobs:
             echo "EOF"
           } >> "${GITHUB_OUTPUT}"
 
-          if grep -qE "^No High or Critical|^Scan produced no output" grype-scan-report.txt 2>/dev/null; then
+          if [[ ${GRYPE_EXIT_CODE} -eq 0 ]]; then
             echo "scan-passed=true" >> "${GITHUB_OUTPUT}"
           else
             echo "scan-passed=false" >> "${GITHUB_OUTPUT}"
+            exit 1
           fi
 
       - name: Comment on Pull Request
