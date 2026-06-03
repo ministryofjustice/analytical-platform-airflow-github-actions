@@ -16,7 +16,6 @@ jobs:
       contents: read
       id-token: write
       pull-requests: write
-      security-events: write
     steps:
       - name: Checkout
         id: checkout
@@ -40,13 +39,19 @@ jobs:
             "https://raw.githubusercontent.com/ministryofjustice/analytical-platform-airflow-${RUNTIME}-base/main/.grype.yml" \
             --output "analytical-platform-airflow-${RUNTIME}-base-grype.yml" || echo "No base .grype.yml found"
 
-          if [[ -f "analytical-platform-airflow-${RUNTIME}-base-grype.yml" ]] && [[ ! -f .grype.yml ]]; then
-            mv "analytical-platform-airflow-${RUNTIME}-base-grype.yml" .grype.yml
+          BASE_GRYPE="analytical-platform-airflow-${RUNTIME}-base-grype.yml"
+
+          if [[ -f "${BASE_GRYPE}" ]] && [[ -f .grype.yml ]]; then
+            echo "Merging base and local .grype.yml configurations"
+            yq eval-all 'explode(.) as $item ireduce ({}; . *+ $item)' "${BASE_GRYPE}" .grype.yml > merged-grype.yml
+            mv merged-grype.yml .grype.yml
+          elif [[ -f "${BASE_GRYPE}" ]]; then
+            mv "${BASE_GRYPE}" .grype.yml
             echo "Using .grype.yml from base repository"
-          elif [[ ! -f .grype.yml ]]; then
-            echo "No .grype.yml found, Grype will use default configuration"
-          else
+          elif [[ -f .grype.yml ]]; then
             echo "Using local .grype.yml configuration"
+          else
+            echo "No .grype.yml found, Grype will use default configuration"
           fi
 
       - name: Build Container Image
@@ -59,26 +64,6 @@ jobs:
           tags: ${{ github.sha }}
 
       - name: Run Grype Vulnerability Scanner
-        id: grype_scan
-        uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
-        env:
-          GRYPE_MATCH_PYTHON_USING_CPES: "true"
-        with:
-          image: ${{ github.sha }}
-          fail-build: true
-          severity-cutoff: high
-          only-fixed: false
-          output-format: sarif
-
-      - name: Upload Grype SARIF Report
-        id: upload_sarif
-        if: always()
-        uses: github/codeql-action/upload-sarif@89a39a4e59826350b863aa6b6252a07ad50cf83e # v4.32.4
-        with:
-          sarif_file: ${{ steps.grype_scan.outputs.sarif }}
-          category: grype-container-scan
-
-      - name: Generate Grype Scan Report (Table Format)
         id: grype_scan_table
         if: always()
         shell: bash
@@ -111,31 +96,61 @@ jobs:
           echo "=== Filtered report ==="
           cat grype-scan-report.txt
 
-      - name: Comment on Scan Success
-        id: comment_on_scan_success
-        if: success() && github.event_name == 'pull_request'
+          {
+            echo "scan-report<<EOF"
+            cat grype-scan-report.txt
+            echo "EOF"
+          } >> "${GITHUB_OUTPUT}"
+
+          if grep -qE "^No High or Critical|^Scan produced no output" grype-scan-report.txt 2>/dev/null; then
+            echo "scan-passed=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "scan-passed=false" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Comment on Pull Request
+        id: comment
+        if: always() && github.event_name == 'pull_request'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          SCAN_REPORT: ${{ steps.grype_scan_table.outputs.scan-report }}
+          SCAN_PASSED: ${{ steps.grype_scan_table.outputs.scan-passed }}
         with:
           script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
+            const passed = process.env.SCAN_PASSED === 'true'
+            const report = process.env.SCAN_REPORT
+
+            const statusLine = passed
+              ? '**Grype Container Scan Passed** No vulnerabilities of severity `high,critical` or higher were found.'
+              : '**Grype Container Scan Failed** Vulnerabilities of severity `high,critical` or higher were detected.\n\nPlease review:\n- The [User Guidance](https://user-guidance.analytical-platform.service.justice.gov.uk/services/airflow/index.html#vulnerability-scanning) for remediation steps\n- The scan artifacts in the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})'
+
+            const body = `## Grype Container Scan\n\n${statusLine}\n\n### Findings (High & Critical)\n\`\`\`\n${report}\n\`\`\``
+
+            const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '**Grype Container Scan Passed** No vulnerabilities of severity `high,critical` or higher were found.'
+              issue_number: context.issue.number,
             })
 
-      - name: Comment on Scan Failure
-        id: comment_on_scan_failure
-        if: failure() && steps.grype_scan.outcome == 'failure' && github.event_name == 'pull_request'
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '**Grype Container Scan Failed**\n\nVulnerabilities of severity `high,critical` or higher were detected.\n\nPlease review:\n- The [Security tab](${{ github.server_url }}/${{ github.repository }}/security/code-scanning) for detailed findings\n- The [User Guidance](https://user-guidance.analytical-platform.service.justice.gov.uk/services/airflow/index.html#vulnerability-scanning) for remediation steps\n- The scan artifacts in the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})'
-            })
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' && comment.body.includes('Grype Container Scan')
+            )
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body,
+              })
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              })
+            }
 
       - name: Scan Summary
         id: scan_summary
