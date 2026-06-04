@@ -16,6 +16,7 @@ jobs:
       contents: read
       id-token: write
       pull-requests: write
+      security-events: write
     steps:
       - name: Checkout
         id: checkout
@@ -76,13 +77,15 @@ jobs:
             curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
           fi
 
-          echo "=== Running Grype (table output, High & Critical only) ==="
+          echo "=== Running Grype (table, SARIF, and JSON output, High & Critical only) ==="
           grype "${IMAGE_TAG}" \
             --fail-on high \
             --only-fixed=true \
-            --output table \
+            --output "table=grype-scan-full.txt" \
+            --output "sarif=grype-results.sarif" \
+            --output "json=grype-results.json" \
             --quiet \
-            > grype-scan-full.txt || GRYPE_EXIT_CODE=$?
+            || GRYPE_EXIT_CODE=$?
           GRYPE_EXIT_CODE=${GRYPE_EXIT_CODE:-0}
 
           if [[ -s grype-scan-full.txt ]]; then
@@ -98,9 +101,39 @@ jobs:
           echo "=== Filtered report ==="
           cat grype-scan-report.txt
 
+          # Generate markdown table with hyperlinked CVE/GHSA IDs from JSON output
+          if [[ -f grype-results.json ]]; then
+            HIGH_CRIT=$(jq '[.matches[] | select(.vulnerability.severity == "High" or .vulnerability.severity == "Critical")] | length' grype-results.json)
+            if [[ ${HIGH_CRIT} -gt 0 ]]; then
+              jq -r '
+                def vuln_link:
+                  . as $id |
+                  if ($id | startswith("CVE-")) then "[" + $id + "](https://nvd.nist.gov/vuln/detail/" + $id + ")"
+                  elif ($id | startswith("GHSA-")) then "[" + $id + "](https://github.com/advisories/" + $id + ")"
+                  else $id
+                  end;
+                (
+                  ["| Package | Installed | Fixed In | Type | Vulnerability | Severity |",
+                   "| :--- | :--- | :--- | :--- | :--- | :--- |"] +
+                  [.matches[] |
+                    select(.vulnerability.severity == "High" or .vulnerability.severity == "Critical") |
+                    "| \(.artifact.name) | \(.artifact.version) | \((.vulnerability.fix.versions // []) | if length == 0 then "No fix available" else join(", ") end) | \(.artifact.type) | \(.vulnerability.id | vuln_link) | \(.vulnerability.severity) |"
+                  ]
+                ) | .[]
+              ' grype-results.json > grype-scan-report-md.txt
+            else
+              echo "No High or Critical vulnerabilities found." > grype-scan-report-md.txt
+            fi
+          else
+            echo "Scan results unavailable." > grype-scan-report-md.txt
+          fi
+
           {
             echo "scan-report<<EOF"
             cat grype-scan-report.txt
+            echo "EOF"
+            echo "scan-report-md<<EOF"
+            cat grype-scan-report-md.txt
             echo "EOF"
           } >> "${GITHUB_OUTPUT}"
 
@@ -111,23 +144,30 @@ jobs:
             exit 1
           fi
 
+      - name: Upload Grype SARIF Results
+        id: upload_sarif
+        if: always()
+        uses: github/codeql-action/upload-sarif@87557b9c84dde89fdd9b10e88954ac2f4248e463 # v4.36.1
+        with:
+          sarif_file: grype-results.sarif
+
       - name: Comment on Pull Request
         id: comment
         if: always() && github.event_name == 'pull_request'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
-          SCAN_REPORT: ${{ steps.grype_scan_table.outputs.scan-report }}
+          SCAN_REPORT_MD: ${{ steps.grype_scan_table.outputs.scan-report-md }}
           SCAN_PASSED: ${{ steps.grype_scan_table.outputs.scan-passed }}
         with:
           script: |
             const passed = process.env.SCAN_PASSED === 'true'
-            const report = process.env.SCAN_REPORT
+            const reportMd = process.env.SCAN_REPORT_MD
 
             const statusLine = passed
               ? '**Grype Container Scan Passed** No vulnerabilities of severity `high,critical` or higher were found.'
               : '**Grype Container Scan Failed** Vulnerabilities of severity `high,critical` or higher were detected. See the findings below.'
 
-            const body = `## Grype Container Scan\n\n${statusLine}\n\n### Findings (High & Critical)\n\`\`\`\n${report}\n\`\`\``
+            const body = `## Grype Container Scan\n\n${statusLine}\n\n### Findings (High & Critical)\n\n${reportMd}`
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
@@ -169,17 +209,16 @@ jobs:
             echo ""
           } >> "$GITHUB_STEP_SUMMARY"
 
-          if [[ -f grype-scan-report.txt ]] && [[ -s grype-scan-report.txt ]]; then
+          if [[ -f grype-scan-report-md.txt ]] && [[ -s grype-scan-report-md.txt ]]; then
             {
               echo "### Scan Results"
-              echo "\`\`\`"
-              cat grype-scan-report.txt
-              echo "\`\`\`"
+              echo ""
+              cat grype-scan-report-md.txt
             } >> "$GITHUB_STEP_SUMMARY"
           else
             {
               echo "### Scan Results"
               echo ""
-              echo "No scan results available. The grype-scan-report.txt file was not found or is empty."
+              echo "No scan results available."
             } >> "$GITHUB_STEP_SUMMARY"
           fi
