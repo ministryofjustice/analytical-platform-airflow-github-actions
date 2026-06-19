@@ -2,9 +2,14 @@
 on:
   workflow_call:
     inputs:
+      clean-actions-runner:
+        type: boolean
+        required: false
+        default: true
       runtime:
         type: string
         required: true
+
 
 permissions: {}
 
@@ -28,6 +33,7 @@ jobs:
         uses: ministryofjustice/analytical-platform-github-actions/octo-sts@72f9c303ec3becced97e2d4472122fee783ff4a4 # v8.0.1
 
       - name: Clean Actions Runner
+        if: inputs.clean-actions-runner == true
         id: clean_actions_runner
         uses: ministryofjustice/action-clean-runner@390530713a326ddc099b2114f38dd0f2f8eac6da # v1.1.0
         with:
@@ -177,9 +183,9 @@ jobs:
                         else "" end) as $url
                       | (($fix_versions[.ruleId] // "") | if . != "" then " (fixed in \(.)" else "" end) as $fix
                       | (if (.message.text | test("^A [A-Za-z]+ vulnerability"))
-                         then (.message.text | sub("^A [A-Za-z]+ vulnerability"; "A \($severity) vulnerability"))
-                         else "A \($severity) vulnerability: \(.message.text)"
-                         end) as $text
+                        then (.message.text | sub("^A [A-Za-z]+ vulnerability"; "A \($severity) vulnerability"))
+                        else "A \($severity) vulnerability: \(.message.text)"
+                        end) as $text
                       | if $url != "" then "- [\($id)](\($url)) - \($text)\($fix)"
                         else "- \(.ruleId) - \($text)\($fix)"
                         end;

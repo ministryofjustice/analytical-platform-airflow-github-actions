@@ -6,10 +6,9 @@ on:
         type: boolean
         required: false
         default: true
-      scan-severity:
+      runtime:
         type: string
-        required: false
-        default: HIGH,CRITICAL
+        required: true
     secrets:
       cve-scan-slack-webhook-url:
         required: true
@@ -58,40 +57,36 @@ jobs:
 
       - name: Generate .grype.yml Configuration
         id: generate_grype_config
+        env:
+          RUNTIME: ${{ inputs.runtime }}
         shell: bash
         run: |
-          imageName=$(grep "^FROM" Dockerfile | cut -d' ' -f2 | cut -d':' -f1)
+          imageRepository="ministryofjustice/analytical-platform-airflow-${RUNTIME}-base"
 
-          if [[ "${imageName}" == "ghcr.io/ministryofjustice/analytical-platform-"* ]]; then
-            imageRepository=${imageName#ghcr.io/}
+          httpStatus=$(curl --silent --show-error --location \
+            --output .base-grype.yml \
+            --write-out "%{http_code}" \
+            "https://raw.githubusercontent.com/${imageRepository}/main/.grype.yml")
 
-            httpStatus=$(curl --silent --show-error --location \
-              --output .base-grype.yml \
-              --write-out "%{http_code}" \
-              "https://raw.githubusercontent.com/${imageRepository}/main/.grype.yml")
+          if [[ "${httpStatus}" == "200" ]]; then
+            echo "Using .grype.yml from ${imageRepository} (default branch)"
 
-            if [[ "${httpStatus}" == "200" ]]; then
-              echo "Using .grype.yml from ${imageRepository} (default branch)"
-
-              if [[ ! -f .grype.yml ]]; then
-                echo ".grype.yml not found, using base as-is"
-                mv .base-grype.yml .grype.yml
-              else
-                echo ".grype.yml already exists, merging with base"
-                # shellcheck disable=SC2016
-                yq eval-all 'explode(.) as $item ireduce ({}; . *+ $item)' .base-grype.yml .grype.yml > merged-grype.yml
-                mv merged-grype.yml .grype.yml
-              fi
-
-            elif [[ "${httpStatus}" == "404" ]]; then
-              echo ".grype.yml not found in ${imageRepository}, using default values" # It's OK if we don't find one
-              rm -f .base-grype.yml
+            if [[ ! -f .grype.yml ]]; then
+              echo ".grype.yml not found, using base as-is"
+              mv .base-grype.yml .grype.yml
             else
-              echo "Error downloading .grype.yml (HTTP ${httpStatus})"
-              exit 1
+              echo ".grype.yml already exists, merging with base"
+              # shellcheck disable=SC2016
+              yq eval-all 'explode(.) as $item ireduce ({}; . *+ $item)' .base-grype.yml .grype.yml > merged-grype.yml
+              mv merged-grype.yml .grype.yml
             fi
+
+          elif [[ "${httpStatus}" == "404" ]]; then
+            echo ".grype.yml not found in ${imageRepository}, using default values" # It's OK if we don't find one
+            rm -f .base-grype.yml
           else
-            echo "Image is not an Analytical Platform image, skipping .grype.yml download"
+            echo "Error downloading .grype.yml (HTTP ${httpStatus})"
+            exit 1
           fi
 
       - name: Scan
