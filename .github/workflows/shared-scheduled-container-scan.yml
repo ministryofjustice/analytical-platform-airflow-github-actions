@@ -189,7 +189,7 @@ jobs:
                       | (if ($id | startswith("CVE-")) then "https://nvd.nist.gov/vuln/detail/\($id)"
                         elif ($id | startswith("GHSA-")) then "https://github.com/advisories/\($id)"
                         else "" end) as $url
-                      | (($fix_versions[.ruleId] // "") | if . != "" then " (fixed in \(.)" else "" end) as $fix
+                      | (($fix_versions[.ruleId] // "") | if . != "" then " (fixed in \(.))" else "" end) as $fix
                       | (if (.message.text | test("^A [A-Za-z]+ vulnerability"))
                         then (.message.text | sub("^A [A-Za-z]+ vulnerability"; "A \($severity) vulnerability"))
                         else "A \($severity) vulnerability: \(.message.text)"
