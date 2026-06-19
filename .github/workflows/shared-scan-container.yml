@@ -10,7 +10,6 @@ on:
         type: string
         required: true
 
-
 permissions: {}
 
 jobs:
