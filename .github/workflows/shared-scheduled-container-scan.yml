@@ -38,7 +38,6 @@ jobs:
           confirm: true
 
       - name: Get Latest Release Tag
-        if: false # temporarily disabled - scanning branch instead of latest release
         id: get_latest_release
         shell: bash
         env:
@@ -94,7 +93,7 @@ jobs:
         id: scan
         uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
         with:
-          image: ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+          image: ghcr.io/${{ github.repository }}:${{ env.latest-release-tag }}
           severity-cutoff: high
           only-fixed: true
           fail-build: false
@@ -247,7 +246,7 @@ jobs:
           exit 1
 
       - name: Slack CVE Alert
-        if: failure() && steps.fail_build.outcome == 'failure'
+        if: success()
         id: slack_cve_alert
         uses: slackapi/slack-github-action@45a88b9581bfab2566dc881e2cd66d334e621e2c # v3.0.3
         with:
@@ -256,5 +255,5 @@ jobs:
           webhook: ${{ secrets.cve-scan-slack-webhook-url }} # zizmor: ignore[secrets-outside-env]
           payload: |
             {
-              "text": ":warning: CVE Alert: fixable high/critical vulnerabilities found in <https://github.com/${{ github.repository }}|${{ github.repository }}>. <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View run>"
+              "text": ":TESTING"
             }
