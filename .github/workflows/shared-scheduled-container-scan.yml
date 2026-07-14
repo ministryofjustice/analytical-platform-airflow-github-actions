@@ -252,7 +252,7 @@ jobs:
         with:
           errors: true
           webhook-type: incoming-webhook
-          webhook: ${{ secrets.cve-scan-slack-webhook-url }} # zizmor: ignore[secrets-outside-env]
+          webhook: ${{ secrets.analytical-platform-cve-scan-slack-webhook-url }} # zizmor: ignore[secrets-outside-env]
           payload: |
             {
               "text": ":TESTING"
