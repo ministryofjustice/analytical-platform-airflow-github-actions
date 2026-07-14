@@ -38,6 +38,7 @@ jobs:
           confirm: true
 
       - name: Get Latest Release Tag
+        if: false # temporarily disabled - scanning branch instead of latest release
         id: get_latest_release
         shell: bash
         env:
@@ -93,7 +94,7 @@ jobs:
         id: scan
         uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
         with:
-          image: ghcr.io/${{ github.repository }}:${{ env.latest-release-tag }}
+          image: ghcr.io/${{ github.repository }}:${{ github.ref_name }}
           severity-cutoff: high
           only-fixed: true
           fail-build: false
