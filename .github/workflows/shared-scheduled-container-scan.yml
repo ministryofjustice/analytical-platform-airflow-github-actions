@@ -254,6 +254,5 @@ jobs:
           webhook: ${{ secrets.cve-scan-slack-webhook-url }} # zizmor: ignore[secrets-outside-env]
           payload: |
             {
-              "repository": "${{ github.repository }}",
-              "run_id": "${{ github.run_id }}"
+              "text": ":warning: CVE Alert: fixable high/critical vulnerabilities found in <https://github.com/${{ github.repository }}|${{ github.repository }}>. <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View run>"
             }
