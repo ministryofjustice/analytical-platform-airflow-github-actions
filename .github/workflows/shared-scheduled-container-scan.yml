@@ -10,7 +10,7 @@ on:
         type: string
         required: true
     secrets:
-      ANALYTICAL_PLATFORM_CVE_SCAN_SLACK_WEBHOOK_URL:
+      cve-scan-slack-webhook-url:
         required: true
 
 permissions: {}
@@ -263,8 +263,9 @@ jobs:
         id: slack_cve_alert_success
         uses: slackapi/slack-github-action@45a88b9581bfab2566dc881e2cd66d334e621e2c # v3.0.3
         with:
+          errors: true
           webhook-type: incoming-webhook
-          webhook: ${{ secrets.ANALYTICAL_PLATFORM_CVE_SCAN_SLACK_WEBHOOK_URL }} # zizmor: ignore[secrets-outside-env]
+          webhook: ${{ secrets.cve-scan-slack-webhook-url }} # zizmor: ignore[secrets-outside-env]
           payload: |
             {
               "text": "Container scan passed for ${{ github.repository }} — no fixable high/critical vulnerabilities.",
