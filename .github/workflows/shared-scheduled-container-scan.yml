@@ -252,7 +252,7 @@ jobs:
         with:
           webhook-type: incoming-webhook
           errors: true
-          webhook: ${{ secrets.cve-scan-slack-webhook-url }} # zizmor: ignore[secrets-outside-env]
+          webhook: ${{ secrets.ANALYTICAL_PLATFORM_CVE_SCAN_SLACK_WEBHOOK_URL }} # zizmor: ignore[secrets-outside-env]
           payload: |
             {
               "repository": "${{ github.repository }}",
