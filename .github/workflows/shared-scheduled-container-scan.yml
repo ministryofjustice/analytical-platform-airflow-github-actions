@@ -10,7 +10,7 @@ on:
         type: string
         required: true
     secrets:
-      cve-scan-slack-webhook-url:
+      ANALYTICAL_PLATFORM_CVE_SCAN_SLACK_WEBHOOK_URL:
         required: true
 
 permissions: {}
