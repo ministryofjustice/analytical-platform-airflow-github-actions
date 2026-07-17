@@ -110,6 +110,7 @@ jobs:
         id: process_scan_result
         shell: bash
         run: |
+          set -x
           print_findings() {
             local title=$1
             local findings=$2
@@ -245,15 +246,15 @@ jobs:
           echo "Build failed - found ${CRITICAL_COUNT} critical and ${HIGH_COUNT} high severity fixable vulnerabilities"
           exit 1
 
-      - name: Slack CVE Alert
-        if: failure() && steps.fail_build.outcome == 'failure'
-        id: slack_cve_alert
-        uses: slackapi/slack-github-action@45a88b9581bfab2566dc881e2cd66d334e621e2c # v3.0.3
-        with:
-          webhook-type: incoming-webhook
-          webhook: ${{ secrets.cve-scan-slack-webhook-url }} # zizmor: ignore[secrets-outside-env]
-          payload: |
-            {
-              "repository": "${{ github.repository }}",
-              "run_id": "${{ github.run_id }}"
-            }
+#      - name: Slack CVE Alert
+#        if: failure() && steps.fail_build.outcome == 'failure'
+#        id: slack_cve_alert
+#        uses: slackapi/slack-github-action@45a88b9581bfab2566dc881e2cd66d334e621e2c # v3.0.3
+#        with:
+#          webhook-type: incoming-webhook
+#          webhook: ${{ secrets.cve-scan-slack-webhook-url }} # zizmor: ignore[secrets-outside-env]
+#          payload: |
+#            {
+#              "repository": "${{ github.repository }}",
+#              "run_id": "${{ github.run_id }}"
+#            }
