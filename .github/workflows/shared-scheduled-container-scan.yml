@@ -246,14 +246,14 @@ jobs:
           exit 1
 
       - name: Slack CVE Alert
-        if: failure() && steps.fail_build.outcome == 'failure'
+        if: success()
         id: slack_cve_alert
         uses: slackapi/slack-github-action@0d95c9a7becc1e6e297d76df9bc735c44f4cbcbc # v3.0.5
         with:
+          errors: true
           webhook-type: incoming-webhook
-          webhook: ${{ secrets.cve-scan-slack-webhook-url }} # zizmor: ignore[secrets-outside-env]
+          webhook: ${{ secrets.analytical-platform-cve-scan-slack-webhook-url }} # zizmor: ignore[secrets-outside-env]
           payload: |
             {
-              "repository": "${{ github.repository }}",
-              "run_id": "${{ github.run_id }}"
+              "text": ":TESTING"
             }
