@@ -30,7 +30,7 @@ jobs:
 
       - name: Octo STS
         id: octo_sts
-        uses: ministryofjustice/analytical-platform-github-actions/octo-sts@72f9c303ec3becced97e2d4472122fee783ff4a4 # v8.0.1
+        uses: ministryofjustice/analytical-platform-github-actions/octo-sts@497b26456c1f0cff118cf5f663b66794d368f3e8 # v8.0.2
 
       - name: Clean Actions Runner
         if: inputs.clean-actions-runner == true
