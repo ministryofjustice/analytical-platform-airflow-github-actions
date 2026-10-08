@@ -129,7 +129,7 @@ jobs:
           # The finding message text is rewritten to match the classified severity so the output is consistent.
 
           RULE_SEVERITIES=$(echo "${SARIF}" | jq -c '
-            .runs[0].tool.driver.rules
+            (.runs[0].tool.driver.rules // [])
             | map({key: .id, value: (.properties["security-severity"] // "0" | tonumber)})
             | from_entries
           ')
@@ -169,7 +169,7 @@ jobs:
 
                   # 1. Build $fix_versions map: scans each rule'\''s help.text for a "Fix Version:" line and maps ruleId → first fix version
 
-                  (.runs[0].tool.driver.rules
+                  (.runs[0].tool.driver.rules // []
                     | map({
                         key: .id,
                         value: (
