@@ -17,7 +17,24 @@
         "AWS": [
           "arn:aws:iam::381491960855:root",
           "arn:aws:iam::767397661611:root",
-          "arn:aws:iam::992382429243:root",
+          "arn:aws:iam::992382429243:root"
+        ]
+      }
+    },
+    {
+      "Sid": "AllowDataPlatform",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:BatchGetImage",
+        "ecr:CompleteLayerUpload",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:InitiateLayerUpload",
+        "ecr:PutImage",
+        "ecr:UploadLayerPart"
+      ],
+      "Principal": {
+        "AWS": [
           "arn:aws:iam::259787491607:root"
         ]
       }
