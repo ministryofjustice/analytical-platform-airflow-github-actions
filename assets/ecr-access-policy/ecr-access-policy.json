@@ -34,7 +34,12 @@
         "ecr:UploadLayerPart"
       ],
       "Principal": {
-        "AWS": ["arn:aws:iam::259787491607:root"]
+        "AWS": [
+          "arn:aws:iam::013433889002:root",
+          "arn:aws:iam::259787491607:root",
+          "arn:aws:iam::386657846332:root",
+          "arn:aws:iam::209019631331:root"
+        ]
       }
     }
   ]
