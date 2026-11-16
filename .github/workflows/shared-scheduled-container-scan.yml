@@ -232,6 +232,88 @@ jobs:
             echo "high-count=${HIGH_COUNT}"
           } >>"${GITHUB_OUTPUT}"
 
+      - name: Identify Removable CVE Ignores
+        id: grype_deletable
+        continue-on-error: true
+        shell: bash
+        env:
+          IMAGE: ${{ github.sha }}
+          GRYPE_CHECK_FOR_APP_UPDATE: "false"
+          GRYPE_DB_AUTO_UPDATE: "false"
+        run: |
+          set -euo pipefail
+
+          if ! git show HEAD:.grype.yml > .own-grype.yml 2>/dev/null; then
+            echo "No .grype.yml in repo, nothing to check"; exit 0
+          fi
+
+          # Grype binary installed by anchore/scan-action (tool cache)
+          GRYPE=$(find "${RUNNER_TOOL_CACHE}/grype" -type f -name grype 2>/dev/null | sort -V | tail -n1)
+          [[ -x "${GRYPE}" ]] || { echo "::warning::Grype from the Scan step not found; skipping"; exit 0; }
+          echo "Using ${GRYPE}"
+          set +e
+          "${GRYPE}" -v --fail-on high --only-fixed -o json --file .deletable-scan.json "${IMAGE}"
+          rc=$?
+          set -e
+          [[ ${rc} -eq 0 || ${rc} -eq 2 ]] || { echo "::warning::grype failed (exit ${rc}); skipping"; exit 0; }
+          lineOffset=$(awk '!/^[[:space:]]*(#.*)?$/ && !/^---[[:space:]]*$/ {print NR-1; exit}' .own-grype.yml)
+          yq -o=json '[(.ignore // []) | to_entries[] | .value + {"__line": (.value | line), "__index": .key}]' .own-grype.yml \
+            | jq --argjson off "${lineOffset:-0}" 'map(.__line += $off)' > .own-grype-rules.json
+
+          mapfile -t ruleIds < <(jq -r '[.[].vulnerability // empty] | unique[]' .own-grype-rules.json)
+          echo "[]" > .aliases.json
+          if [[ ${#ruleIds[@]} -gt 0 ]]; then
+            if ! "${GRYPE}" db search vuln "${ruleIds[@]}" -o json > .aliases.json 2>/dev/null; then
+              for id in "${ruleIds[@]}"; do
+                "${GRYPE}" db search vuln "${id}" -o json 2>/dev/null || echo "[]"
+              done | jq -s 'add' > .aliases.json
+            fi
+            if [[ "$(jq length .aliases.json)" -eq 0 ]]; then
+              echo "::warning::Could not look up vulnerability aliases; skipping"; exit 0
+            fi
+          fi
+
+          jq -n --slurpfile rules .own-grype-rules.json --slurpfile scan .deletable-scan.json --slurpfile db .aliases.json '
+            def up: ascii_upcase;
+            def groups: [ $db[0][]? | ([.id] + (.aliases // [])) | map(up) ];
+            def family($id): ([$id] + [ groups[] | select(index($id)) | .[] ]) | unique;
+            ([ ($scan[0].matches[]?, $scan[0].ignoredMatches[]?)
+               | .vulnerability.id, (.relatedVulnerabilities[]?.id) ] | map(up) | unique) as $present
+            | [ $rules[0][]
+                | select((.vulnerability // "") != "")
+                | select(family(.vulnerability | up) as $f | any($f[]; . as $x | $present | index($x)) | not) ]
+          ' > .deletable.json
+
+          COUNT=$(jq length .deletable.json)
+          {
+            echo "## Rules that can be deleted from .grype.yml: ${COUNT}"
+            echo ""
+            if [[ "${COUNT}" -eq 0 ]]; then
+              echo "✅ None."
+            else
+              echo "These vulnerabilities are no longer in the image under any ID (CVE, GO, GHSA)."
+              echo ""
+              echo "| Line | Vulnerability | Package | Reason |"
+              echo "|---|---|---|---|"
+              jq -r '
+                def cell: tostring | gsub("[\\s]+"; " ") | gsub("\\|"; "/") | sub("^ +"; "") | sub(" +$"; "")
+                          | if length > 160 then .[0:157] + "..." else . end;
+                .[] | "| \(.__line) | \(.vulnerability | cell) | \(.package.location // .package.name // "-" | cell) | \(.reason // "-" | cell) |"
+              ' .deletable.json
+              echo ""
+              echo "<details><summary>.grype.yml with these rules removed</summary>"
+              echo ""
+              echo '```yaml'
+              yq "$(jq -r '"del(" + ([.[].__index | ".ignore[\(.)]"] | join(", ")) + ")"' .deletable.json)" .own-grype.yml
+              echo '```'
+              echo ""
+              echo "</details>"
+            fi
+            echo ""
+          } >>"${GITHUB_STEP_SUMMARY}"
+
+          [[ "${COUNT}" -eq 0 ]] || echo "::warning::${COUNT} rule(s) in .grype.yml can be deleted"
+
       - name: Fail Build on Findings
         if: |
           steps.process_scan_result.outputs.critical-count > 0 ||
