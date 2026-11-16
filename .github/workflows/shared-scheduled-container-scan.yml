@@ -278,7 +278,7 @@ jobs:
             def groups: [ $db[0][]? | ([.id] + (.aliases // [])) | map(up) ];
             def family($id): ([$id] + [ groups[] | select(index($id)) | .[] ]) | unique;
             ([ ($scan[0].matches[]?, $scan[0].ignoredMatches[]?)
-               | .vulnerability.id, (.relatedVulnerabilities[]?.id) ] | map(up) | unique) as $present
+              | .vulnerability.id, (.relatedVulnerabilities[]?.id) ] | map(up) | unique) as $present
             | [ $rules[0][]
                 | select((.vulnerability // "") != "")
                 | select(family(.vulnerability | up) as $f | any($f[]; . as $x | $present | index($x)) | not) ]
